@@ -111,7 +111,7 @@ Account creation, password rotation, and session revocation run **only** in Svel
 | Phase | Scope | Status |
 |---|---|---|
 | **0. Frontend prototype** | SvelteKit + SCSS design system, app shells for 3 roles, mock data, priority screens: Login, Team Home, Marketplace, Challenge detail, My Product, Mentor dashboard, Admin overview | **Done, pending review** |
-| 1. Foundation | Supabase project, migrations + RLS + seed, `@supabase/ssr` auth, role-based route guards, admin account provisioning actions | Next |
+| 1. Foundation | Supabase project, migrations + RLS + seed, `@supabase/ssr` auth, role-based route guards, admin account provisioning actions | **Done.** 20 integration tests pass against the live project |
 | 2. Core student experience | Autosave with versioning, logs/tables persisted, decisions, tasks, export (Markdown + print stylesheet) | |
 | 3. Mentorship & admin | Milestone review flow, field comments, team/roster/mentor management, challenge editor, semester settings | |
 | 4. Education & tools | PM Academy CMS, Business Model Studio, Feasibility Explorer, Career Center, Demo Day | |
@@ -138,7 +138,7 @@ Account creation, password rotation, and session revocation run **only** in Svel
 
 | Requirement | Prototype (mock) | Backend |
 |---|---|---|
-| Authentication / roles | Login UI + role switcher | ☐ |
+| Authentication / roles | ☑ | ☑ (Supabase Auth, RLS, route guards) |
 | Team dashboard | ☑ | ☐ |
 | Challenge Marketplace + detail | ☑ | ☐ |
 | Structured product documentation | ☑ (all 8 sections, config-driven) | ☐ |

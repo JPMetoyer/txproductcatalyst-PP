@@ -18,7 +18,7 @@ npm run dev            # http://localhost:5173
 |---|---|
 | `npm run check` | Type-check Svelte + TS |
 | `npm test` | Unit tests (fast, offline) |
-| `npm run test:rls` | Access-control tests against the real database, signing in as each role |
+| `npm run test:rls` | Access-control tests against the real database, signing in as each role. Set `STUDIO_URL` to a running dev server to also test login + page guards |
 | `npm run db:seed -- --reset` | Wipe and reseed demo data (**dev only — deletes everything**) |
 
 ### Environment variables (`.env`, never committed)
