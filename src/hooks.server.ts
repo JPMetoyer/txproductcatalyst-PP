@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { redirect, type Handle } from '@sveltejs/kit';
-import { PUBLIC_SUPABASE_PUBLISHABLE_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
+import { env } from '$env/dynamic/public';
 import { homeFor } from '$lib/auth/accounts';
 import type { Role } from '$lib/types/domain';
 
@@ -18,7 +18,8 @@ const AREAS: { prefix: string; role: Role }[] = [
 ];
 
 export const handle: Handle = async ({ event, resolve }) => {
-	event.locals.supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
+	// Read at runtime: Cloudflare provides these from wrangler.toml [vars]; locally they come from .env.
+	event.locals.supabase = createServerClient(env.PUBLIC_SUPABASE_URL!, env.PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
 		cookies: {
 			getAll: () => event.cookies.getAll(),
 			setAll: (cookies) => cookies.forEach(({ name, value, options }) => event.cookies.set(name, value, { ...options, path: '/' }))

@@ -115,7 +115,7 @@ Account creation, password rotation, and session revocation run **only** in Svel
 | 2. Core student experience | Autosave with versioning, logs/tables persisted, decisions, tasks, export (Markdown + print stylesheet) | **Done.** Team pages read and save real data; 27 integration tests |
 | 3. Mentorship & admin | Milestone review flow, field comments, team/roster/mentor management, challenge editor, semester settings | **Done.** Comment threads, flags, phase tracking, roster tools, mentors, semester/challenge/curriculum/milestone editors; 46 tests |
 | 4. Education & tools | PM Academy CMS, Business Model Studio, Feasibility Explorer, Career Center, Demo Day | **Done.** Lesson pages, both tools with conflict-safe autosave, Career Center + editor, Demo Day + editor + readiness; 63 tests |
-| 5. Test & deploy | RLS tests per role, concurrent-edit tests, Playwright smoke tests, mobile QA, Cloudflare Pages deploy to `studio.texasproductcatalyst.org` (CNAME in Netlify DNS), admin guide | |
+| 5. Test & deploy | RLS tests per role, concurrent-edit tests, Playwright smoke tests, mobile QA, Cloudflare Pages deploy to `studio.texasproductcatalyst.org` (CNAME in Netlify DNS), admin guide | **Ready to launch.** 45 integration tests pass on the production build in Cloudflare's runtime; CI + keep-alive workflows; DEPLOY.md + ADMIN_GUIDE.md. Remaining: account setup steps in DEPLOY.md |
 
 ---
 

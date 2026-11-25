@@ -2,7 +2,7 @@
 
 Product management workspace for Texas Product Catalyst's semester Product Project.
 
-**Status:** Phases 1–4 done. All MVP features from the PRD are built on real data. Phase 5 (deployment to `studio.texasproductcatalyst.org`, mobile QA, admin guide) is next. See [docs/PLAN.md](docs/PLAN.md) for architecture, risks, open questions, and the progress tracker.
+**Status:** MVP complete and tested on Cloudflare's runtime. To launch, follow **[docs/DEPLOY.md](docs/DEPLOY.md)**. Academics officers should read **[docs/ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md)**. See [docs/PLAN.md](docs/PLAN.md) for architecture, risks, open questions, and the progress tracker.
 
 ## Run locally
 
@@ -20,12 +20,15 @@ npm run dev            # http://localhost:5173
 | `npm test` | Unit tests (fast, offline) |
 | `npm run test:rls` | Access-control tests against the real database, signing in as each role. Set `STUDIO_URL` to a running dev server to also test login + page guards |
 | `npm run db:seed -- --reset` | Wipe and reseed demo data (**dev only — deletes everything**) |
+| `npm run db:seed -- --wipe-only` | Remove demo data and demo accounts before launch |
+| `npm run create-admin -- "Name"` | Create an admin account (prints the password once) |
+| `npm run preview:cf` | Production build in Cloudflare's runtime (needs `.dev.vars`) |
 
 ### Environment variables (`.env`, never committed)
 
 | Variable | Where to find it | Secret? |
 |---|---|---|
-| `PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API | No |
+| `PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API (also in `wrangler.toml` for Cloudflare) | No |
 | `PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase → Project Settings → API Keys | No (RLS protects data) |
 | `SUPABASE_SECRET_KEY` | Supabase → Project Settings → API Keys → Secret keys | **Yes** (server only) |
 | `SUPABASE_DB_URL` | Supabase → Connect → Session pooler | **Yes** (only for migrations) |

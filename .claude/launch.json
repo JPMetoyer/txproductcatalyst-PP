@@ -1,6 +1,26 @@
 {
 	"version": "0.0.1",
 	"configurations": [
-		{ "name": "studio", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "--", "--port", "5179"], "port": 5179 }
+		{
+			"name": "studio",
+			"runtimeExecutable": "npm",
+			"runtimeArgs": [
+				"run",
+				"dev",
+				"--",
+				"--port",
+				"5179"
+			],
+			"port": 5179
+		},
+		{
+			"name": "studio-prod",
+			"runtimeExecutable": "npm",
+			"runtimeArgs": [
+				"run",
+				"preview:cf"
+			],
+			"port": 8788
+		}
 	]
 }

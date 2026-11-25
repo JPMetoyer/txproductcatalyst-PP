@@ -12,7 +12,9 @@
 		"test": "vitest run",
 		"db:migrate": "tsx --env-file=.env scripts/db-migrate.ts",
 		"db:seed": "tsx --env-file=.env scripts/db-seed.ts",
-		"test:rls": "vitest run --config vitest.rls.config.ts"
+		"test:rls": "vitest run --config vitest.rls.config.ts",
+		"preview:cf": "npm run build && wrangler pages dev --port 8788",
+		"create-admin": "tsx --env-file=.env scripts/create-admin.ts"
 	},
 	"devDependencies": {
 		"@lucide/svelte": "^0.525.0",

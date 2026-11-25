@@ -1,0 +1,13 @@
+# Cloudflare Pages settings for TPC Studio. See docs/DEPLOY.md.
+name = "tpc-studio"
+pages_build_output_dir = ".svelte-kit/cloudflare"
+compatibility_date = "2026-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+# For local `npm run preview:cf`, put SUPABASE_SECRET_KEY in .dev.vars (git-ignored).
+
+# Public values (safe to commit: access is enforced by row-level security in Supabase).
+# The secret key is NOT here — set SUPABASE_SECRET_KEY as an encrypted secret in the Cloudflare dashboard.
+[vars]
+PUBLIC_SUPABASE_URL = "https://imjcxhyckarppenknuzi.supabase.co"
+PUBLIC_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_ISTfIYvDA7aOd4WLcDvW-A_dyWcGShp"

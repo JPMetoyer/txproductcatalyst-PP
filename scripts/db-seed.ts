@@ -1,12 +1,14 @@
 // Seeds a development database with the prototype's mock data and creates test accounts.
 // Usage:
-//   npm run db:seed            → seeds an empty database
-//   npm run db:seed -- --reset → deletes seeded data + @studio test accounts first (DEV ONLY)
+//   npm run db:seed                  → seeds an empty database
+//   npm run db:seed -- --reset       → deletes ALL semester data + the demo accounts, then reseeds (DEV ONLY)
+//   npm run db:seed -- --wipe-only   → deletes ALL semester data + the demo accounts, no reseed (before launch)
+// Demo accounts are the ones listed in .seed-credentials.json; other accounts (e.g. real admins) are kept.
 //
 // Generated passwords are written to .seed-credentials.json (git-ignored). They are never printed.
 
 import { randomBytes } from 'node:crypto';
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { createClient } from '@supabase/supabase-js';
 import * as mock from './seed-data.ts';
 import { ACCOUNT_DOMAIN, slugify } from '../src/lib/auth/accounts.ts';
@@ -16,7 +18,8 @@ const secret = process.env.SUPABASE_SECRET_KEY;
 if (!url || !secret) throw new Error('PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY must be set in .env');
 
 const db = createClient(url, secret, { auth: { persistSession: false, autoRefreshToken: false } });
-const reset = process.argv.includes('--reset');
+const wipeOnly = process.argv.includes('--wipe-only');
+const reset = process.argv.includes('--reset') || wipeOnly;
 
 function must<T>(r: { data: T; error: unknown }, what: string): NonNullable<T> {
 	if (r.error) throw new Error(`${what}: ${JSON.stringify(r.error)}`);
@@ -25,7 +28,10 @@ function must<T>(r: { data: T; error: unknown }, what: string): NonNullable<T> {
 
 const password = () => randomBytes(18).toString('base64url');
 
-async function allSeedUsers() {
+/** Demo accounts created by a previous seed run (from .seed-credentials.json). Never touches other accounts. */
+async function demoUsers() {
+	const listed: { email: string }[] = await readFile('.seed-credentials.json', 'utf8').then(JSON.parse).catch(() => []);
+	const emails = new Set(listed.map((c) => c.email));
 	const users = [];
 	for (let page = 1; ; page++) {
 		const { data, error } = await db.auth.admin.listUsers({ page, perPage: 200 });
@@ -33,7 +39,7 @@ async function allSeedUsers() {
 		users.push(...data.users);
 		if (data.users.length < 200) break;
 	}
-	return users.filter((u) => u.email?.endsWith('@' + ACCOUNT_DOMAIN));
+	return users.filter((u) => u.email && emails.has(u.email));
 }
 
 async function wipe() {
@@ -49,7 +55,8 @@ async function wipe() {
 		const q = t === 'resources' ? db.from(t).delete().not('semester_id', 'is', null) : db.from(t).delete().not(col, 'is', null);
 		must(await q, `wipe ${t}`);
 	}
-	for (const u of await allSeedUsers()) must(await db.auth.admin.deleteUser(u.id), `delete user ${u.email}`);
+	// Team accounts must go before their profiles are removed; profiles cascade from auth users.
+	for (const u of await demoUsers()) must(await db.auth.admin.deleteUser(u.id), `delete user ${u.email}`);
 }
 
 async function createAccount(email: string, displayName: string, role: 'team' | 'mentor' | 'admin') {
@@ -66,6 +73,11 @@ async function main() {
 		return;
 	}
 	if (reset) await wipe();
+	if (wipeOnly) {
+		await writeFile('.seed-credentials.json', '[]\n', { mode: 0o600 });
+		console.log('Demo data and demo accounts removed. Create real accounts with `npm run create-admin`.');
+		return;
+	}
 
 	const id = new Map<string, string>(); // mock id → database id
 	const s = mock.semester;

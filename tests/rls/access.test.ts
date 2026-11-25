@@ -149,3 +149,24 @@ describe.skipIf(!creds.length)('row-level security', () => {
 		});
 	});
 });
+
+describe.skipIf(!secret)('accounts without a Studio profile', () => {
+	it('can read nothing, even if one somehow exists in Supabase Auth', async () => {
+		// Simulates someone who got an Auth account outside admin provisioning (e.g. public sign-up left on).
+		const admin = createClient(url, secret, { auth: { persistSession: false } });
+		const email = `no-profile-${Date.now()}@studio.texasproductcatalyst.org`;
+		const password = crypto.randomUUID();
+		const { data: created, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
+		expect(error).toBeNull();
+		try {
+			const sb = client();
+			expect((await sb.auth.signInWithPassword({ email, password })).error).toBeNull();
+			for (const t of ['semesters', 'milestones', 'lessons', 'challenges', 'announcements', 'resources', 'profiles', 'teams', 'product_fields']) {
+				const r = await sb.from(t).select('*').limit(1);
+				expect(r.data ?? [], t).toEqual([]);
+			}
+		} finally {
+			await admin.auth.admin.deleteUser(created.user!.id);
+		}
+	});
+});
