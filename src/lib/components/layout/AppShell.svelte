@@ -12,9 +12,8 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { page } from '$app/state';
-	import { Menu, X, Settings, LogOut } from '@lucide/svelte';
+	import { Menu, X, Settings, LogOut, LogIn } from '@lucide/svelte';
 	import Toaster from '$lib/components/ui/Toaster.svelte';
-	import PrototypeBar from './PrototypeBar.svelte';
 
 	interface Props {
 		nav: NavItem[];
@@ -22,9 +21,10 @@
 		workspaceSub: string;
 		roleLabel: string;
 		settingsHref?: string;
+		signedIn?: boolean;
 		children: Snippet;
 	}
-	let { nav, workspaceName, workspaceSub, roleLabel, settingsHref, children }: Props = $props();
+	let { nav, workspaceName, workspaceSub, roleLabel, settingsHref, signedIn = true, children }: Props = $props();
 	let open = $state(false);
 
 	const isActive = (item: NavItem) =>
@@ -82,7 +82,13 @@
 			{#if settingsHref}
 				<a href={settingsHref} class:active={page.url.pathname === settingsHref}><Settings size={18} aria-hidden="true" /> Settings</a>
 			{/if}
-			<a href="/login"><LogOut size={18} aria-hidden="true" /> Log out</a>
+			{#if signedIn}
+				<form method="POST" action="/logout">
+					<button type="submit" class="navlink"><LogOut size={18} aria-hidden="true" /> Log out</button>
+				</form>
+			{:else}
+				<a href="/login"><LogIn size={18} aria-hidden="true" /> Sign in</a>
+			{/if}
 		</div>
 	</nav>
 
@@ -94,7 +100,6 @@
 </div>
 
 <Toaster />
-<PrototypeBar />
 
 <style lang="scss">
 	.skip {
@@ -237,7 +242,7 @@
 		flex-direction: column;
 		gap: 2px;
 	}
-	a {
+	@mixin navlink {
 		display: flex;
 		align-items: center;
 		gap: var(--sp-3);
@@ -252,6 +257,9 @@
 			background: var(--c-surface-2);
 			color: var(--c-text);
 		}
+	}
+	a {
+		@include navlink;
 		&.active {
 			background: var(--tint-blue);
 			color: var(--tpc-ink);
@@ -268,6 +276,14 @@
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
+	}
+	.navlink {
+		@include navlink;
+		width: 100%;
+		border: 0;
+		background: none;
+		cursor: pointer;
+		text-align: left;
 	}
 	main {
 		min-width: 0;

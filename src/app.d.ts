@@ -1,8 +1,15 @@
-// See https://svelte.dev/docs/kit/types#app.d.ts
+import type { SupabaseClient, User } from '@supabase/supabase-js';
+import type { Role } from '$lib/types/domain';
+
 declare global {
 	namespace App {
+		interface Locals {
+			/** Per-request client acting as the signed-in user (RLS applies). */
+			supabase: SupabaseClient;
+			user: User | null;
+			profile: { id: string; displayName: string; role: Role } | null;
+		}
 		// interface Error {}
-		// interface Locals { supabase, user, role } — added in Phase 1
 		// interface PageData {}
 		// interface PageState {}
 		// interface Platform {}

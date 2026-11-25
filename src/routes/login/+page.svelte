@@ -1,29 +1,13 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { enhance } from '$app/forms';
 	import { Lock, Info } from '@lucide/svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Capybara from '$lib/components/ui/Capybara.svelte';
 	import { getSemester } from '$lib/data';
 
+	let { data, form } = $props();
 	const semester = getSemester();
-	let email = $state('');
-	let password = $state('');
-	let error = $state('');
 	let loading = $state(false);
-
-	// Prototype: any non-empty credentials sign in. Phase 1 → Supabase Auth form action.
-	async function submit(e: SubmitEvent) {
-		e.preventDefault();
-		error = '';
-		if (!email.trim() || !password) {
-			error = 'Enter your team login and password.';
-			return;
-		}
-		loading = true;
-		await new Promise((r) => setTimeout(r, 500));
-		const dest = email.startsWith('mentor') ? '/mentor' : email.startsWith('admin') ? '/admin' : '/home';
-		goto(dest);
-	}
 </script>
 
 <svelte:head><title>Sign in · TPC Studio</title></svelte:head>
@@ -42,20 +26,30 @@
 	</aside>
 
 	<main>
-		<form onsubmit={submit} novalidate>
+		<form
+			method="POST"
+			use:enhance={() => {
+				loading = true;
+				return async ({ update }) => {
+					await update({ reset: false });
+					loading = false;
+				};
+			}}
+		>
 			<h2>Sign in</h2>
 			<p class="muted">Use the login your Academics Committee sent your team.</p>
+			{#if data.next}<input type="hidden" name="next" value={data.next} />{/if}
 
 			<label>
-				<span>Team login or email</span>
-				<input type="text" autocomplete="username" bind:value={email} placeholder="team-nestled" aria-invalid={!!error && !email} />
+				<span>Team login</span>
+				<input name="login" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" value={form?.login ?? ''} placeholder="team-nestled" required aria-invalid={!!form?.error} />
 			</label>
 			<label>
 				<span>Password</span>
-				<input type="password" autocomplete="current-password" bind:value={password} aria-invalid={!!error && !password} />
+				<input name="password" type="password" autocomplete="current-password" required aria-invalid={!!form?.error} />
 			</label>
 
-			{#if error}<p class="error" role="alert">{error}</p>{/if}
+			{#if form?.error}<p class="error" role="alert">{form.error}</p>{/if}
 
 			<Button variant="primary" full type="submit" icon={Lock} disabled={loading}>{loading ? 'Signing in…' : 'Sign in'}</Button>
 
@@ -68,15 +62,6 @@
 			</div>
 			<p class="muted small">Forgot the password? Ask your Academics Committee contact to reset it.</p>
 
-			<div class="demo">
-				<span>Prototype shortcuts</span>
-				<div>
-					<a href="/home">Team</a>
-					<a href="/mentor">Mentor</a>
-					<a href="/admin">Admin</a>
-					<a href="/challenges">Public marketplace</a>
-				</div>
-			</div>
 		</form>
 	</main>
 </div>
@@ -207,29 +192,6 @@
 		}
 		p {
 			color: var(--tpc-ink);
-		}
-	}
-	.demo {
-		border-top: 1px dashed var(--c-border-strong);
-		padding-top: var(--sp-3);
-		font-size: var(--fs-xs);
-		color: var(--c-text-faint);
-		div {
-			display: flex;
-			flex-wrap: wrap;
-			gap: var(--sp-2);
-			margin-top: 6px;
-		}
-		a {
-			padding: 3px 10px;
-			border-radius: 999px;
-			background: var(--c-surface-2);
-			text-decoration: none;
-			color: var(--c-text-muted);
-			font-weight: 600;
-			&:hover {
-				color: var(--c-text);
-			}
 		}
 	}
 </style>

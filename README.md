@@ -2,18 +2,37 @@
 
 Product management workspace for Texas Product Catalyst's semester Product Project.
 
-**Status:** Phase 0, frontend prototype with mock data. See [docs/PLAN.md](docs/PLAN.md) for architecture, risks, open questions, and the progress tracker.
+**Status:** Phase 1 (foundation): real login, roles, database schema and access rules. Page content still comes from mock data until Phase 2. See [docs/PLAN.md](docs/PLAN.md) for architecture, risks, open questions, and the progress tracker.
 
 ## Run locally
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
-npm run check      # type-check Svelte + TS
-npm test           # unit tests (Vitest)
+cp .env.example .env   # then fill in the values (see below)
+npm run db:migrate     # create tables + access rules in Supabase
+npm run db:seed        # demo semester, teams, mentors, admin (logins → .seed-credentials.json)
+npm run dev            # http://localhost:5173
 ```
 
-In the prototype, any login works. Use the **Prototype** pill at the bottom of the screen to switch between the Team, Mentor, and Admin views.
+| Command | What it does |
+|---|---|
+| `npm run check` | Type-check Svelte + TS |
+| `npm test` | Unit tests (fast, offline) |
+| `npm run test:rls` | Access-control tests against the real database, signing in as each role |
+| `npm run db:seed -- --reset` | Wipe and reseed demo data (**dev only — deletes everything**) |
+
+### Environment variables (`.env`, never committed)
+
+| Variable | Where to find it | Secret? |
+|---|---|---|
+| `PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API | No |
+| `PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase → Project Settings → API Keys | No (RLS protects data) |
+| `SUPABASE_SECRET_KEY` | Supabase → Project Settings → API Keys → Secret keys | **Yes** (server only) |
+| `SUPABASE_DB_URL` | Supabase → Connect → Session pooler | **Yes** (only for migrations) |
+
+### Accounts
+
+There is no public sign-up. Admins create teams under **Admin → Teams**, which generates a login like `team-nestled` and a password that's shown once. Team logins are Supabase Auth users with addresses on `studio.texasproductcatalyst.org`. No email is ever sent to them. **Reset credentials** issues a new password and signs out every device.
 
 ## Where things live
 
@@ -27,7 +46,12 @@ In the prototype, any login works. Use the **Prototype** pill at the bottom of t
 | `src/lib/styles/` | Design tokens (`global.scss`) and SCSS mixins (`_tokens.scss`) |
 | `src/lib/components/ui/` | Reusable UI: Button, Card, Badge, Modal, Toast, EmptyState… |
 | `src/routes/(team)`, `mentor/`, `admin/` | Pages for each role |
+| `src/hooks.server.ts` | Session check + which role can open which pages |
+| `src/lib/server/` | Server-only code (privileged Supabase client) |
+| `supabase/migrations/` | Database schema, access rules (RLS), RPCs |
+| `scripts/` | `db-migrate.ts`, `db-seed.ts` |
+| `tests/rls/` | Access-control integration tests |
 
 ## Stack
 
-SvelteKit 2 (Svelte 5) · TypeScript · SCSS · Lucide icons · `@sveltejs/adapter-cloudflare`. Supabase (Postgres + Auth) arrives in Phase 1.
+SvelteKit 2 (Svelte 5) · TypeScript · SCSS · Lucide icons · `@sveltejs/adapter-cloudflare`. Supabase (Postgres + Auth + RLS) via `@supabase/ssr`.
