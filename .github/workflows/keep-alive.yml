@@ -17,6 +17,6 @@ jobs:
         env:
           # Set a repository variable STUDIO_URL (Settings → Secrets and variables → Actions → Variables)
           # if Studio isn't at the default address yet (e.g. https://tpc-studio.pages.dev).
-          STUDIO_URL: ${{ vars.STUDIO_URL || 'https://studio.texasproductcatalyst.org' }}
+          STUDIO_URL: ${{ vars.STUDIO_URL || 'https://studio.texasproductcatalyst.com' }}
         run: |
           curl --fail --silent --show-error --max-time 30 --retry 3 --retry-delay 20 "$STUDIO_URL/api/health"

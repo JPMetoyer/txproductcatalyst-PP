@@ -154,7 +154,7 @@ describe.skipIf(!secret)('accounts without a Studio profile', () => {
 	it('can read nothing, even if one somehow exists in Supabase Auth', async () => {
 		// Simulates someone who got an Auth account outside admin provisioning (e.g. public sign-up left on).
 		const admin = createClient(url, secret, { auth: { persistSession: false } });
-		const email = `no-profile-${Date.now()}@studio.texasproductcatalyst.org`;
+		const email = `no-profile-${Date.now()}@studio.texasproductcatalyst.com`;
 		const password = crypto.randomUUID();
 		const { data: created, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
 		expect(error).toBeNull();

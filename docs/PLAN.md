@@ -36,10 +36,10 @@ Not reused: Tailwind (the PRD asks for SCSS, and a single styling approach is ea
 
 Free-tier figures to re-verify before launch: Supabase (500 MB DB, 50k MAU, 2 free projects, pausing policy) and Cloudflare Pages/Workers (requests/day, builds/month).
 
-**Hosting decision (2026-11-24): Cloudflare Pages, with DNS staying on Netlify.**
-- **Why not Netlify:** the main TPC site is hosted on Netlify, but Netlify's Free plan moved to a monthly allowance of 300 credits for new accounts. Page views and function calls both use up credits, and the per-request rates aren't clearly published. Going over pauses the site for the rest of the month.
+**Hosting decision (2026-11-24): Cloudflare Pages, with DNS staying where it is (Vercel).**
+- **Why not Netlify:** (we first assumed the main site was on Netlify; it's actually on Vercel.) Netlify's Free plan moved to a monthly allowance of 300 credits for new accounts. Page views and function calls both use up credits, and the per-request rates aren't clearly published. Going over pauses the site for the rest of the month.
 - **Why Cloudflare:** the free plan gives 100k function requests/day and unlimited free static assets. Going over returns an error for the rest of that day only. It needs no credit card, so there's no way to be charged.
-- **Domain setup:** the only DNS change is one CNAME record, `studio` → the Pages project, added in Netlify's DNS panel. `texasproductcatalyst.org` stays on Netlify.
+- **Domain setup:** the only DNS change is one CNAME record, `studio` → the Pages project, added in Vercel's DNS settings (the registrar, Namecheap, delegates DNS to Vercel). The main site is unaffected.
 - **Constraint:** the free plan allows 10 ms of CPU time per request. SvelteKit pages that mostly wait on Supabase fit comfortably, but avoid heavy server-side computation.
 
 ---
@@ -115,7 +115,7 @@ Account creation, password rotation, and session revocation run **only** in Svel
 | 2. Core student experience | Autosave with versioning, logs/tables persisted, decisions, tasks, export (Markdown + print stylesheet) | **Done.** Team pages read and save real data; 27 integration tests |
 | 3. Mentorship & admin | Milestone review flow, field comments, team/roster/mentor management, challenge editor, semester settings | **Done.** Comment threads, flags, phase tracking, roster tools, mentors, semester/challenge/curriculum/milestone editors; 46 tests |
 | 4. Education & tools | PM Academy CMS, Business Model Studio, Feasibility Explorer, Career Center, Demo Day | **Done.** Lesson pages, both tools with conflict-safe autosave, Career Center + editor, Demo Day + editor + readiness; 63 tests |
-| 5. Test & deploy | RLS tests per role, concurrent-edit tests, Playwright smoke tests, mobile QA, Cloudflare Pages deploy to `studio.texasproductcatalyst.org` (CNAME in Netlify DNS), admin guide | **Ready to launch.** 45 integration tests pass on the production build in Cloudflare's runtime; CI + keep-alive workflows; DEPLOY.md + ADMIN_GUIDE.md. Remaining: account setup steps in DEPLOY.md |
+| 5. Test & deploy | RLS tests per role, concurrent-edit tests, Playwright smoke tests, mobile QA, Cloudflare Pages deploy to `studio.texasproductcatalyst.com` (CNAME in Vercel DNS), admin guide | **Ready to launch.** 45 integration tests pass on the production build in Cloudflare's runtime; CI + keep-alive workflows; DEPLOY.md + ADMIN_GUIDE.md. Remaining: account setup steps in DEPLOY.md |
 
 ---
 
@@ -125,7 +125,7 @@ Account creation, password rotation, and session revocation run **only** in Svel
 
 1. **Team login identifier.** Supabase Auth needs an email. Should we use synthetic addresses (`team-slug@studio.<domain>`, shown to students as just a username) or a real shared inbox per team?
 2. **Password resets.** Is admin-only rotation acceptable for launch, or do teams need self-serve "forgot password"? Self-serve needs custom SMTP (see R2).
-3. ~~Which domain?~~ **Answered:** texasproductcatalyst.org. DNS is on Netlify; Studio goes on Cloudflare Pages via a CNAME.
+3. ~~Which domain?~~ **Answered:** texasproductcatalyst.com. DNS is managed in Vercel; Studio goes on Cloudflare Pages via a CNAME.
 4. **Mentors per team.** Is it always one, or sometimes co-mentors? The plan assumes a join table either way.
 5. **Milestone 4 timing.** After GM7 or after GM8? Should it be configurable per semester? (The plan makes all milestone dates configurable.)
 6. **Archived semesters.** Can a team account from a past semester still log in read-only, or are past semesters visible only to admins and mentors?

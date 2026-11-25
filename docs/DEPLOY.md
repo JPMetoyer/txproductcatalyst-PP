@@ -7,7 +7,7 @@ TPC Studio runs entirely on free tiers:
 | Website + server code | Cloudflare Pages (free), project `tpc-studio` → `https://tpc-studio-87j.pages.dev` | TPC shared email |
 | Database + logins | Supabase (free) | TPC shared email |
 | Code | GitHub | Currently `JPMetoyer/txproductcatalyst-PP`. Move to a TPC organization later. |
-| Domain | `studio.texasproductcatalyst.org`. DNS stays on Netlify. | Whoever manages the Netlify site |
+| Domain | `studio.texasproductcatalyst.com`. DNS is managed in **Vercel** (where the main website is hosted). The registrar is Namecheap, with nameservers pointed at Vercel. | Whoever manages the Vercel project for the main site |
 
 Nothing here needs a credit card. If a free limit is ever reached, the service stops temporarily and never bills you.
 
@@ -63,14 +63,14 @@ From then on, **every push to `main` deploys automatically.**
 
 ## 4. Custom domain
 
-1. In Cloudflare Pages → your project → **Custom domains → Set up a custom domain**, enter `studio.texasproductcatalyst.org`. Cloudflare shows a **CNAME target** like `tpc-studio.pages.dev`.
-2. In **Netlify** → Domains → `texasproductcatalyst.org` → DNS settings → **Add new record**:
+1. In Cloudflare Pages → your project → **Custom domains → Set up a custom domain**, enter `studio.texasproductcatalyst.com`. Cloudflare shows a **CNAME target** like `tpc-studio.pages.dev`.
+2. In **Vercel** → your team → **Domains** → `texasproductcatalyst.com` → **DNS Records** → add:
    - Type: `CNAME`
    - Name: `studio`
    - Value: the target from step 1
 3. Wait for Cloudflare to show the domain as **Active** (usually minutes, up to a day). HTTPS is automatic.
 
-The main website on Netlify is unaffected.
+The main website on Vercel is unaffected.
 
 ## 5. Keep-alive and CI (GitHub Actions)
 

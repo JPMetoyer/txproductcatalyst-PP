@@ -35,7 +35,7 @@ npm run dev            # http://localhost:5173
 
 ### Accounts
 
-There is no public sign-up. Admins create teams under **Admin → Teams**, which generates a login like `team-nestled` and a password that's shown once. Team logins are Supabase Auth users with addresses on `studio.texasproductcatalyst.org`. No email is ever sent to them. **Reset credentials** issues a new password and signs out every device.
+There is no public sign-up. Admins create teams under **Admin → Teams**, which generates a login like `team-nestled` and a password that's shown once. Team logins are Supabase Auth users with addresses on `studio.texasproductcatalyst.com`. No email is ever sent to them. **Reset credentials** issues a new password and signs out every device.
 
 ## For admins (no code needed)
 
