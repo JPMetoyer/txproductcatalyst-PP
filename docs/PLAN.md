@@ -112,7 +112,7 @@ Account creation, password rotation, and session revocation run **only** in Svel
 |---|---|---|
 | **0. Frontend prototype** | SvelteKit + SCSS design system, app shells for 3 roles, mock data, priority screens: Login, Team Home, Marketplace, Challenge detail, My Product, Mentor dashboard, Admin overview | **Done, pending review** |
 | 1. Foundation | Supabase project, migrations + RLS + seed, `@supabase/ssr` auth, role-based route guards, admin account provisioning actions | **Done.** 20 integration tests pass against the live project |
-| 2. Core student experience | Autosave with versioning, logs/tables persisted, decisions, tasks, export (Markdown + print stylesheet) | |
+| 2. Core student experience | Autosave with versioning, logs/tables persisted, decisions, tasks, export (Markdown + print stylesheet) | **Done.** Team pages read and save real data; 27 integration tests |
 | 3. Mentorship & admin | Milestone review flow, field comments, team/roster/mentor management, challenge editor, semester settings | |
 | 4. Education & tools | PM Academy CMS, Business Model Studio, Feasibility Explorer, Career Center, Demo Day | |
 | 5. Test & deploy | RLS tests per role, concurrent-edit tests, Playwright smoke tests, mobile QA, Cloudflare Pages deploy to `studio.texasproductcatalyst.org` (CNAME in Netlify DNS), admin guide | |
@@ -139,14 +139,14 @@ Account creation, password rotation, and session revocation run **only** in Svel
 | Requirement | Prototype (mock) | Backend |
 |---|---|---|
 | Authentication / roles | ☑ | ☑ (Supabase Auth, RLS, route guards) |
-| Team dashboard | ☑ | ☐ |
-| Challenge Marketplace + detail | ☑ | ☐ |
-| Structured product documentation | ☑ (all 8 sections, config-driven) | ☐ |
-| Automatic saving + conflict UI | Simulated (local) | ☐ |
-| Research / testing / iteration logs | ☑ | ☐ |
-| Competitor & feature tables | ☑ | ☐ |
-| Decision log | ☑ | ☐ |
-| Team tasks | ☑ (local state) | ☐ |
+| Team dashboard | ☑ | ☑ |
+| Challenge Marketplace + detail | ☑ | ☑ (incl. public browsing) |
+| Structured product documentation | ☑ (all 8 sections, config-driven) | ☑ |
+| Automatic saving + conflict UI | ☑ | ☑ (per-field versions, tested with two sessions) |
+| Research / testing / iteration logs | ☑ | ☑ |
+| Competitor & feature tables | ☑ | ☑ |
+| Decision log | ☑ | ☑ |
+| Team tasks | ☑ | ☑ |
 | Mentor dashboard | ☑ | ☐ |
 | Admin overview | ☑ | ☐ |
 | Milestone reviews | Status display | ☐ |
@@ -154,6 +154,6 @@ Account creation, password rotation, and session revocation run **only** in Svel
 | Feasibility Explorer | ☐ | ☐ |
 | PM Academy / Career / Demo Day | Placeholders | ☐ |
 | Admin CRUD, semester config | ☐ | ☐ |
-| Export | ☑ (Markdown download) | ☐ |
-| PM Academy lesson list | ☑ (read-only) | ☐ |
+| Export | ☑ (Markdown download) | ☑ (from saved data) |
+| PM Academy lesson list | ☑ (read-only) | ☑ (team view) |
 | Admin teams page | ☑ (UI only) | ☐ |

@@ -3,11 +3,10 @@
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import ChallengeCard from '$lib/components/ui/ChallengeCard.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
-	import { DEMO, getChallenges, getSemester, getTeam } from '$lib/data';
 
-	const semester = getSemester();
-	const team = getTeam(DEMO.teamId)!;
-	const all = getChallenges({ publishedOnly: true });
+	let { data } = $props();
+	const all = $derived(data.challenges);
+	const assignedId = $derived(data.ctx?.team.challengeId ?? null);
 	let q = $state('');
 	const list = $derived(
 		all.filter((c) => (c.title + c.summary + c.stakeholders.join(' ')).toLowerCase().includes(q.trim().toLowerCase()))
@@ -17,8 +16,8 @@
 <svelte:head><title>Challenge Marketplace · TPC Studio</title></svelte:head>
 
 <div class="theme">
-	<span>{semester.name} theme</span>
-	<strong>{semester.theme}</strong>
+	<span>{data.semester?.name ?? ''} theme</span>
+	<strong>{data.semester?.theme ?? 'Challenges'}</strong>
 	<p>Explore everyday experiences, life transitions, and unfamiliar responsibilities. Each challenge describes an experience — not a solution. Your team decides what to build.</p>
 </div>
 
@@ -32,10 +31,12 @@
 	{/snippet}
 </PageHeader>
 
-{#if list.length}
+{#if all.length === 0}
+	<EmptyState title="Challenges aren't published yet" body="Check back once the Academics Committee publishes this semester's challenges." />
+{:else if list.length}
 	<div class="grid">
 		{#each list as c (c.id)}
-			<ChallengeCard challenge={c} href="/challenges/{c.id}" assigned={c.id === team.challengeId} />
+			<ChallengeCard challenge={c} href="/challenges/{c.id}" assigned={c.id === assignedId} />
 		{/each}
 	</div>
 {:else}

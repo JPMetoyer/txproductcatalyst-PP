@@ -12,9 +12,9 @@
 		{ href: '/career', label: 'Career Center', icon: Briefcase },
 		{ href: '/demo-day', label: 'Demo Day', icon: Presentation }
 	];
-	const sub = $derived(data.semester ? `${data.semester.name} · ${data.semester.theme}` : 'Public preview');
+	const sub = $derived(data.ctx ? `${data.ctx.semester.name} · ${data.ctx.semester.theme}` : 'Public preview');
 </script>
 
-<AppShell {nav} workspaceName={data.team?.name ?? 'TPC Studio'} workspaceSub={sub} roleLabel={data.team ? 'Team workspace' : 'Browsing'} settingsHref={data.team ? '/settings' : undefined} signedIn={!!data.team}>
+<AppShell {nav} workspaceName={data.ctx?.team.name ?? 'TPC Studio'} workspaceSub={sub} roleLabel={data.ctx ? 'Team workspace' : 'Browsing'} settingsHref={data.ctx ? '/settings' : undefined} signedIn={!!data.ctx}>
 	{@render children()}
 </AppShell>

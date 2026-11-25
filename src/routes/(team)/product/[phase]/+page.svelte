@@ -6,34 +6,37 @@
 	import LogTable from '$lib/components/product/LogTable.svelte';
 	import { PHASES, phaseMeta } from '$lib/config/phases';
 	import { sectionFor, sectionFill } from '$lib/config/product-schema';
-	import * as data from '$lib/data';
 	import { workspace } from '$lib/stores/workspace.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
 	import { fmtDate } from '$lib/utils/format';
 	import type { MilestoneStatus } from '$lib/types/domain';
 
-	let { data: pageData } = $props();
-	const phase = $derived(pageData.phase);
+	let { data } = $props();
+	const phase = $derived(data.phase);
 	const meta = $derived(phaseMeta(phase));
 	const section = $derived(sectionFor(phase));
-	const team = data.getTeam(data.DEMO.teamId)!;
-	const comments = data.getFieldComments(data.getProduct(team.id)?.id ?? '');
-	const lesson = $derived(data.getLessons().find((l) => l.relatedPhase === phase));
-	const milestone = $derived(data.getMilestones().find((m) => (m.relatedPhases as string[]).includes(phase)));
+	const lesson = $derived(data.lessons.find((l) => l.relatedPhase === phase));
+	const milestone = $derived(data.milestones.find((m) => (m.relatedPhases as string[]).includes(phase)));
 
-	// Prototype: local readiness state. Phase 3: sets milestone_reviews.ready_at.
 	let readiness = $state<Record<string, MilestoneStatus>>({});
-	const status = $derived(milestone ? (readiness[milestone.id] ?? data.getReview(team.id, milestone.id)?.status ?? 'upcoming') : 'upcoming');
+	const status = $derived<MilestoneStatus>(
+		milestone ? (readiness[milestone.id] ?? data.reviews.find((r) => r.milestoneId === milestone.id)?.status ?? 'upcoming') : 'upcoming'
+	);
+	let marking = $state(false);
 
 	const fill = $derived(workspace.product ? sectionFill(phase, workspace.product.fields) : { filled: 0, total: 0 });
 	const idx = $derived(PHASES.findIndex((p) => p.key === phase));
 	const prev = $derived(PHASES[idx - 1]);
 	const next = $derived(PHASES[idx + 1]);
 
-	function markReady() {
+	async function markReady() {
 		if (!milestone) return;
+		marking = true;
+		const res = await fetch('/api/milestones/ready', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ milestoneId: milestone.id }) });
+		marking = false;
+		if (!res.ok) return toast((await res.json().catch(() => null))?.message ?? 'Could not mark ready', 'error');
 		readiness[milestone.id] = 'ready';
-		toast(`Marked ready for ${milestone.title}. Your mentor has been notified on their dashboard.`, 'success');
+		toast(`Marked ready for ${milestone.title}. It now shows on your mentor's dashboard.`, 'success');
 	}
 </script>
 
@@ -61,8 +64,8 @@
 			<span>Reviews this section · target {fmtDate(milestone.targetDate)}</span>
 		</div>
 		<MilestoneStatusBadge {status} />
-		{#if status === 'upcoming' || status === 'follow-up'}
-			<Button size="sm" variant="primary" onclick={markReady}>Mark ready for review</Button>
+		{#if !workspace.readonly && (status === 'upcoming' || status === 'follow-up')}
+			<Button size="sm" variant="primary" onclick={markReady} disabled={marking}>Mark ready for review</Button>
 		{/if}
 	</div>
 {/if}
@@ -85,14 +88,14 @@
 		<h3 id="g-{group.title}">{group.title}</h3>
 		<div class="fields">
 			{#each group.fields as def (def.key)}
-				<FieldInput {def} comments={comments.filter((c) => c.fieldKey === def.key && !c.resolved)} />
+				<FieldInput {def} comments={workspace.comments.filter((c) => c.fieldKey === def.key)} readonly={workspace.readonly} />
 			{/each}
 		</div>
 	</section>
 {/each}
 
 {#each section.tables ?? [] as t (t.kind)}
-	<div class="group"><LogTable def={t} /></div>
+	<div class="group"><LogTable def={t} readonly={workspace.readonly} /></div>
 {/each}
 
 <nav class="pager" aria-label="Section navigation">

@@ -22,7 +22,8 @@
 
 	let { data: pd } = $props();
 	const team = $derived(pd.team);
-	$effect.pre(() => workspace.load(team.id));
+	// Phase 3: replace mock data with a server load (RLS already limits mentors to assigned teams).
+	$effect.pre(() => workspace.init(data.getProduct(team.id) ?? null, data.getFieldComments(data.getProduct(team.id)?.id ?? ''), { readonly: true }));
 
 	const tabs = ['overview', 'docs', 'decisions', 'review'] as const;
 	type Tab = (typeof tabs)[number];

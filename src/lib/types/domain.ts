@@ -145,6 +145,8 @@ export interface Decision {
 	reasoning: string;
 	attribution: string;
 	status: DecisionStatus;
+	/** Row version for conflict detection (absent on unsaved drafts). */
+	version?: number;
 }
 
 /* ---------- Product documentation ---------- */

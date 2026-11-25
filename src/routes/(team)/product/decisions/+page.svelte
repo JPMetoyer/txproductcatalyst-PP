@@ -4,34 +4,39 @@
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import DecisionLog from '$lib/components/product/DecisionLog.svelte';
 	import { JOURNEY, phaseMeta } from '$lib/config/phases';
-	import { today } from '$lib/data';
 	import { workspace } from '$lib/stores/workspace.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
 	import type { Decision } from '$lib/types/domain';
 
+	let { data } = $props();
 	let open = $state(false);
+	let saving = $state(false);
 	let draft = $state<Decision | null>(null);
 
 	function blank(): Decision {
-		return { id: crypto.randomUUID(), productId: workspace.product!.id, title: '', date: today(), phase: 'discover', description: '', alternatives: '', evidence: '', reasoning: '', attribution: '', status: 'proposed' };
+		return { id: crypto.randomUUID(), productId: workspace.product!.id, title: '', date: data.today, phase: 'discover', description: '', alternatives: '', evidence: '', reasoning: '', attribution: '', status: 'proposed' };
 	}
 	function edit(d?: Decision) {
 		draft = d ? { ...d } : blank();
 		open = true;
 	}
-	function save(e: SubmitEvent) {
+	async function save(e: SubmitEvent) {
 		e.preventDefault();
 		if (!draft || !draft.title.trim()) return;
-		workspace.upsertDecision($state.snapshot(draft));
-		open = false;
-		toast('Decision saved', 'success');
+		saving = true;
+		const ok = await workspace.saveDecision($state.snapshot(draft) as Decision);
+		saving = false;
+		if (ok) {
+			open = false;
+			toast('Decision saved', 'success');
+		}
 	}
-	function remove() {
+	async function remove() {
 		if (!draft || !confirm('Delete this decision? Consider marking it “Reversed” instead to keep the history.')) return;
-		workspace.removeDecision(draft.id);
 		open = false;
+		await workspace.removeDecision(draft.id);
 	}
-	const isNew = $derived(!!draft && !workspace.product?.decisions.some((d) => d.id === draft!.id));
+	const isNew = $derived(draft?.version == null);
 </script>
 
 <svelte:head><title>Decision log · My Product · TPC Studio</title></svelte:head>
@@ -41,10 +46,10 @@
 		<h2>Decision log</h2>
 		<p>How your product evolved — and why. Great material for Demo Day and recruiting interviews.</p>
 	</div>
-	<Button variant="primary" icon={Plus} onclick={() => edit()}>Log a decision</Button>
+	{#if !workspace.readonly}<Button variant="primary" icon={Plus} onclick={() => edit()}>Log a decision</Button>{/if}
 </div>
 
-<DecisionLog decisions={workspace.product?.decisions ?? []} onedit={edit} />
+<DecisionLog decisions={workspace.product?.decisions ?? []} onedit={workspace.readonly ? undefined : edit} />
 
 <Modal {open} title={isNew ? 'Log a decision' : 'Edit decision'} onclose={() => (open = false)} wide>
 	{#if draft}
@@ -74,7 +79,7 @@
 	{#snippet footer()}
 		{#if !isNew}<Button variant="danger" onclick={remove} class="mr-auto">Delete</Button>{/if}
 		<Button variant="ghost" onclick={() => (open = false)}>Cancel</Button>
-		<Button variant="primary" type="submit" form="decision-form">Save decision</Button>
+		<Button variant="primary" type="submit" form="decision-form" disabled={saving}>{saving ? 'Saving…' : 'Save decision'}</Button>
 	{/snippet}
 </Modal>
 

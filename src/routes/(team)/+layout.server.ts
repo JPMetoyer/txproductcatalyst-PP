@@ -1,12 +1,7 @@
-// Loads the signed-in team's workspace header. RLS guarantees a team account only ever sees its own team.
+import { loadTeamContext, todayISO } from '$lib/server/repo';
+
+// Shared by every team page. For signed-out visitors (public marketplace) ctx is null.
 export const load = async ({ locals }) => {
-	if (!locals.profile) return { team: null, semester: null }; // public marketplace browsing
-
-	const { data: team } = await locals.supabase
-		.from('teams')
-		.select('id, name, current_phase, semester:semesters(name, theme)')
-		.maybeSingle();
-
-	const semester = team?.semester as unknown as { name: string; theme: string } | null;
-	return { team: team ? { id: team.id, name: team.name } : null, semester };
+	const ctx = locals.profile?.role === 'team' ? await loadTeamContext(locals.supabase) : null;
+	return { ctx, today: todayISO() };
 };

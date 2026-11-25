@@ -8,7 +8,7 @@
 
 	let { tasks: initial, roster, teamId, today }: { tasks: Task[]; roster: TeamMember[]; teamId: string; today: string } = $props();
 
-	// Prototype: local state. Phase 2: form actions against the `tasks` table.
+	// Local copy for instant feedback; every change is saved through /api/tasks (RLS-protected).
 	// svelte-ignore state_referenced_locally (intentional: seed local state once)
 	let tasks = $state(initial.map((t) => ({ ...t })));
 	let title = $state('');
@@ -22,29 +22,48 @@
 	const done = $derived(tasks.filter((t) => t.status === 'done'));
 	const member = (id: string | null) => roster.find((m) => m.id === id);
 
-	function add(e: SubmitEvent) {
+	async function call<T>(method: string, payload: unknown): Promise<T | null> {
+		const res = await fetch('/api/tasks', { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+		if (!res.ok) {
+			toast((await res.json().catch(() => null))?.message ?? 'Could not save the task', 'error');
+			return null;
+		}
+		return res.json();
+	}
+
+	async function add(e: SubmitEvent) {
 		e.preventDefault();
 		if (!title.trim()) return;
-		tasks.push({ id: crypto.randomUUID(), teamId, title: title.trim(), assignedMemberId: assignee || null, dueDate: due || null, status: 'open' });
+		const created = await call<Task>('POST', { teamId, title: title.trim(), assignedMemberId: assignee || null, dueDate: due || null });
+		if (!created) return;
+		tasks.push(created);
 		title = '';
 		due = '';
 		assignee = '';
 	}
-	function toggle(t: Task) {
-		t.status = t.status === 'open' ? 'done' : 'open';
-		if (t.status === 'done') toast('Task completed', 'success');
+	async function toggle(t: Task) {
+		const next = t.status === 'open' ? 'done' : 'open';
+		t.status = next; // optimistic
+		if (!(await call('PATCH', { id: t.id, status: next }))) t.status = next === 'done' ? 'open' : 'done';
+		else if (next === 'done') toast('Task completed', 'success');
 	}
-	function remove(t: Task) {
-		tasks.splice(tasks.indexOf(t), 1);
-		toast('Task deleted');
+	async function remove(t: Task) {
+		const i = tasks.indexOf(t);
+		tasks.splice(i, 1);
+		if (await call('DELETE', { id: t.id })) toast('Task deleted');
+		else tasks.splice(i, 0, t);
 	}
 	function startEdit(t: Task) {
 		editingId = t.id;
 		editTitle = t.title;
 	}
-	function saveEdit(t: Task) {
-		if (editTitle.trim()) t.title = editTitle.trim();
+	async function saveEdit(t: Task) {
+		const v = editTitle.trim();
 		editingId = null;
+		if (!v || v === t.title) return;
+		const old = t.title;
+		t.title = v;
+		if (!(await call('PATCH', { id: t.id, title: v }))) t.title = old;
 	}
 </script>
 

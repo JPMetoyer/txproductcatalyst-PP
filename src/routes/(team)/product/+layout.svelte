@@ -1,34 +1,40 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { Download, GitBranch, Users } from '@lucide/svelte';
+	import { beforeNavigate } from '$app/navigation';
+	import { Download, GitBranch } from '@lucide/svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import SaveIndicator from '$lib/components/ui/SaveIndicator.svelte';
 	import { PHASES } from '$lib/config/phases';
-	import { sectionFor } from '$lib/config/product-schema';
-	import { DEMO, getTeam } from '$lib/data';
 	import { workspace } from '$lib/stores/workspace.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
 	import { download, productToMarkdown } from '$lib/utils/export';
 
-	let { children } = $props();
-	const team = getTeam(DEMO.teamId)!;
-	workspace.load(team.id);
+	let { data, children } = $props();
+	const teamName = $derived(data.ctx!.team.name);
 
-	const name = $derived((workspace.value('ov.name') as string) || team.name);
+	// Initialize from server data (no-op when staying on the same product, so edits survive tab switches).
+	$effect.pre(() => workspace.init(data.product, data.comments, { readonly: data.archived }));
+
+	const name = $derived((workspace.value('ov.name') as string) || teamName);
 	const current = $derived(page.params.phase ?? (page.url.pathname.endsWith('/decisions') ? 'decisions' : ''));
+
+	// Warn before leaving with unsaved edits (closing the tab, or leaving the workspace).
+	$effect(() => {
+		const warn = (e: BeforeUnloadEvent) => {
+			if (workspace.dirty) e.preventDefault();
+		};
+		addEventListener('beforeunload', warn);
+		return () => removeEventListener('beforeunload', warn);
+	});
+	beforeNavigate((nav) => {
+		const leaving = !nav.to?.url.pathname.startsWith('/product');
+		if (leaving && workspace.dirty && !confirm('Some changes are still saving. Leave anyway?')) nav.cancel();
+	});
 
 	function exportDoc() {
 		if (!workspace.product) return;
-		download(`${name.toLowerCase().replace(/\W+/g, '-')}-product-doc.md`, productToMarkdown(workspace.product, team.name));
+		download(`${name.toLowerCase().replace(/\W+/g, '-')}-product-doc.md`, productToMarkdown(workspace.product, teamName));
 		toast('Exported as Markdown', 'success');
-	}
-
-	// Prototype-only: demonstrates conflict detection without a second device.
-	function simulate() {
-		const phase = (page.params.phase ?? 'overview') as Parameters<typeof sectionFor>[0];
-		const field = sectionFor(phase).groups.flatMap((g) => g.fields).find((f) => f.type === 'textarea')!;
-		workspace.simulateTeammateEdit(field.key, 'Edited by a teammate on another laptop just now.');
-		toast(`A teammate saved “${field.label}”. Edit that field to see conflict handling.`, 'info', 6000);
 	}
 </script>
 
@@ -39,7 +45,6 @@
 	</div>
 	<div class="tools">
 		<SaveIndicator state={workspace.overall} />
-		<Button size="sm" variant="ghost" icon={Users} onclick={simulate} title="Prototype only">Simulate teammate edit</Button>
 		<Button size="sm" icon={Download} onclick={exportDoc}>Export</Button>
 	</div>
 </div>
@@ -54,7 +59,11 @@
 	</a>
 </nav>
 
-<p class="shared-note">Shared workspace — changes save automatically and are visible to your whole team and mentor.</p>
+{#if data.archived}
+	<p class="shared-note">This semester is archived — documentation is read-only.</p>
+{:else}
+	<p class="shared-note">Shared workspace — changes save automatically and are visible to your whole team and mentor.</p>
+{/if}
 
 {@render children()}
 

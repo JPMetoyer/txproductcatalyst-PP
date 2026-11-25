@@ -3,11 +3,10 @@
 	import ChallengeIcon from '$lib/components/ui/ChallengeIcon.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
-	import { DEMO, getTeam } from '$lib/data';
 
 	let { data } = $props();
 	const c = $derived(data.challenge);
-	const assigned = $derived(getTeam(DEMO.teamId)?.challengeId === c.id);
+	const assigned = $derived(data.ctx?.team.challengeId === c.id);
 </script>
 
 <svelte:head><title>{c.title} · Challenge brief · TPC Studio</title></svelte:head>

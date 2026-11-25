@@ -2,7 +2,7 @@
 
 Product management workspace for Texas Product Catalyst's semester Product Project.
 
-**Status:** Phase 1 (foundation): real login, roles, database schema and access rules. Page content still comes from mock data until Phase 2. See [docs/PLAN.md](docs/PLAN.md) for architecture, risks, open questions, and the progress tracker.
+**Status:** Phase 2 done. Login, access rules, and every team page run on real data with autosave. Mentor and admin screens (other than Admin → Teams) still show demo data until Phase 3. See [docs/PLAN.md](docs/PLAN.md) for architecture, risks, open questions, and the progress tracker.
 
 ## Run locally
 
@@ -40,8 +40,10 @@ There is no public sign-up. Admins create teams under **Admin → Teams**, which
 |---|---|
 | `src/lib/config/product-schema.ts` | **Every My Product field and table.** Edit here to add or rename fields. |
 | `src/lib/config/phases.ts` | Journey phases and their GM mapping |
-| `src/lib/data/` | Data access. `mock.ts` is placeholder data; `index.ts` is the API pages call |
-| `src/lib/data/field-store.ts` | Conflict-safe save logic (tested) |
+| `src/lib/server/repo.ts` | Database reads for pages (runs as the signed-in user, so RLS applies) |
+| `src/lib/server/validate.ts` | Input validation for every write endpoint |
+| `src/routes/api/` | Save endpoints: fields, logs, decisions, tasks, milestone readiness |
+| `src/lib/data/` | Demo data still used by mentor/admin screens (removed in Phase 3) |
 | `src/lib/stores/workspace.svelte.ts` | My Product autosave state |
 | `src/lib/styles/` | Design tokens (`global.scss`) and SCSS mixins (`_tokens.scss`) |
 | `src/lib/components/ui/` | Reusable UI: Button, Card, Badge, Modal, Toast, EmptyState… |

@@ -8,27 +8,27 @@
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import JourneyStrip from '$lib/components/product/JourneyStrip.svelte';
 	import TaskList from '$lib/components/product/TaskList.svelte';
-	import { phaseMeta } from '$lib/config/phases';
-	import * as data from '$lib/data';
+	import { JOURNEY, phaseMeta } from '$lib/config/phases';
 	import { fmtDate, relativeDays, timeAgo } from '$lib/utils/format';
 
-	const today = data.today();
-	const team = data.getTeam(data.DEMO.teamId)!;
-	const semester = data.getSemester();
-	const challenge = data.getChallenge(team.challengeId ?? '');
-	const roster = data.getRoster(team.id);
-	const lesson = data.getUpcomingLesson();
-	const milestone = data.getNextMilestone();
-	const review = data.getReview(team.id, milestone.id);
-	const mentor = data.getMentor(team.mentorIds[0]);
-	const feedback = data.getFeedback(team.id)[0];
-	const feedbackMilestone = feedback ? data.getMilestones().find((m) => m.id === feedback.milestoneId) : null;
-	const product = data.getProduct(team.id);
-	const prototypeUrl = product?.fields['ov.prototype']?.value as string | undefined;
-	const announcement = data.getAnnouncements()[0];
-	const phase = phaseMeta(team.currentPhase);
+	let { data } = $props();
+	const ctx = $derived(data.ctx!);
+	const team = $derived(ctx.team);
+	const semester = $derived(ctx.semester);
+	const challenge = $derived(ctx.challenge);
+	const today = $derived(data.today);
+	const lesson = $derived(data.lesson);
+	const milestone = $derived(data.milestone);
+	const review = $derived(data.review);
+	const mentorNames = $derived(ctx.mentors.map((m) => m.name).join(', '));
+	const feedback = $derived(data.feedback);
+	const announcement = $derived(data.announcement);
+	const prototypeUrl = $derived(data.prototypeUrl);
+	const phase = $derived(phaseMeta(team.currentPhase));
+	// Journey markers are informational: phases up to the current one show as started.
+	const started = $derived(JOURNEY.slice(0, JOURNEY.indexOf(team.currentPhase) + 1));
 
-	const hour = 19; // prototype: fixed so SSR and client agree
+	const hour = Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: 'America/Chicago' }).format(new Date()));
 	const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 </script>
 
@@ -39,8 +39,8 @@
 		<span class="eyebrow">{semester.name} · {semester.theme}</span>
 		<h1>{greeting}, {team.name}.</h1>
 		<p>
-			You're in the <strong>{phase.label}</strong> phase{#if challenge}&nbsp;of <a href="/challenges/{challenge.id}">{challenge.title}</a>{/if}. Next up:
-			get ready for your {milestone.title}.
+			You're in the <strong>{phase.label}</strong> phase{#if challenge}&nbsp;of <a href="/challenges/{challenge.id}">{challenge.title}</a>{/if}.{#if milestone} Next up:
+			get ready for your {milestone.title}.{/if}
 		</p>
 		<div class="hero-actions">
 			<Button variant="primary" href="/product/{team.currentPhase}" iconRight={ArrowRight}>Continue in {phase.label}</Button>
@@ -59,18 +59,19 @@
 {/if}
 
 <Card title="Product journey" eyebrow="Informational — work ahead or revisit anytime" id="journey">
-	<JourneyStrip current={team.currentPhase} started={team.phasesStarted} linkBase="/product" />
+	<JourneyStrip current={team.currentPhase} {started} linkBase="/product" />
 </Card>
 
 <div class="grid">
 	<div class="col">
+		{#if milestone}
 		<Card title={milestone.title} eyebrow="Next milestone · M{milestone.number}" tone="highlight" id="milestone">
 			{#snippet action()}
 				{#if review}<MilestoneStatusBadge status={review.status} />{/if}
 			{/snippet}
 			<dl class="meta">
 				<div><dt>Target</dt><dd>{fmtDate(milestone.targetDate)} <span class="muted">({relativeDays(today, milestone.targetDate)})</span></dd></div>
-				<div><dt>Mentor</dt><dd>{mentor?.displayName ?? 'Unassigned'}</dd></div>
+				<div><dt>Mentor</dt><dd>{mentorNames || 'Unassigned'}</dd></div>
 			</dl>
 			<p class="label">Your mentor will discuss</p>
 			<ul class="chips">
@@ -81,9 +82,10 @@
 				{#each milestone.relatedPhases as p, i}<a href="/product/{p}">{phaseMeta(p).label}</a>{i < milestone.relatedPhases.length - 1 ? ' and ' : ''}{/each}.
 			</p>
 		</Card>
+		{/if}
 
 		<Card title="Team tasks" id="tasks">
-			<TaskList tasks={data.getTasks(team.id)} {roster} teamId={team.id} {today} />
+			<TaskList tasks={data.tasks} roster={ctx.roster} teamId={team.id} {today} />
 		</Card>
 	</div>
 
@@ -102,8 +104,8 @@
 					<p>{feedback.body}</p>
 					<footer>
 						<MessageSquare size={14} aria-hidden="true" />
-						{feedback.mentorName} · {timeAgo(feedback.createdAt, today)}
-						{#if feedbackMilestone}· <a href="/product/{feedbackMilestone.relatedPhases[0]}">{feedbackMilestone.title}</a>{/if}
+						{feedback.mentorName} · {timeAgo(feedback.at, new Date().toISOString())}
+						{#if feedback.milestoneTitle}· <a href="/product/{feedback.phase}">{feedback.milestoneTitle}</a>{/if}
 					</footer>
 				</blockquote>
 			{:else}

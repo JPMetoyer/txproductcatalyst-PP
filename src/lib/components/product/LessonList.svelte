@@ -2,13 +2,13 @@
 	import { ArrowRight } from '@lucide/svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import { phaseMeta } from '$lib/config/phases';
-	import { getLessons, today } from '$lib/data';
 	import { fmtDate } from '$lib/utils/format';
 
-	let { linkToProduct = true }: { linkToProduct?: boolean } = $props();
-	const t = today();
-	const lessons = getLessons().filter((l) => l.published);
-	const upcoming = lessons.find((l) => l.scheduledDate >= t);
+	import type { Lesson } from '$lib/types/domain';
+
+	let { lessons: all, today: t, linkToProduct = true }: { lessons: Lesson[]; today: string; linkToProduct?: boolean } = $props();
+	const lessons = $derived(all.filter((l) => l.published).sort((a, b) => a.gmNumber - b.gmNumber));
+	const upcoming = $derived(lessons.find((l) => l.scheduledDate >= t));
 </script>
 
 <ol class="lessons">

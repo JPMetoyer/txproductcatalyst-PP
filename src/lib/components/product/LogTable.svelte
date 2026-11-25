@@ -10,13 +10,13 @@
 	const rows = $derived(workspace.logs(def.kind));
 	let openId = $state<string | null>(null);
 
-	function add() {
-		const e = workspace.addLog(def.kind);
-		openId = e.id;
+	async function add() {
+		const e = await workspace.addLog(def.kind);
+		if (e) openId = e.id;
 	}
-	function remove(id: string) {
+	async function remove(id: string) {
 		if (!confirm('Delete this entry? This cannot be undone.')) return;
-		workspace.removeLog(id);
+		await workspace.removeLog(id);
 		toast('Entry deleted');
 	}
 	const summary = (data: Record<string, string>) =>

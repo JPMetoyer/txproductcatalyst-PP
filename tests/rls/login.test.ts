@@ -1,31 +1,12 @@
 // End-to-end login + route-guard check against a running dev server.
 // Run: STUDIO_URL=http://localhost:5173 npm run test:rls   (skipped when the server isn't reachable)
-import { existsSync, readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
-
-type Cred = { role: string; name: string; email: string; password: string };
-const creds: Cred[] = existsSync('.seed-credentials.json') ? JSON.parse(readFileSync('.seed-credentials.json', 'utf8')) : [];
-const base = process.env.STUDIO_URL ?? 'http://localhost:5173';
+import { creds, get, login, serverUp } from './helpers';
 
 let up = false;
 beforeAll(async () => {
-	up = await fetch(`${base}/login`).then((r) => r.ok).catch(() => false);
+	up = await serverUp();
 });
-
-/** Signs in through the real /login form action; returns the session cookie header. */
-async function login(name: string, password?: string) {
-	const c = creds.find((x) => x.name === name)!;
-	const body = new URLSearchParams({ login: c.email.split('@')[0], password: password ?? c.password });
-	const res = await fetch(`${base}/login`, {
-		method: 'POST',
-		body,
-		headers: { origin: base, 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
-		redirect: 'manual'
-	});
-	const cookie = res.headers.getSetCookie().map((h) => h.split(';')[0]).join('; ');
-	return { res, cookie, json: res.headers.get('content-type')?.includes('json') ? await res.json() : null };
-}
-const get = (path: string, cookie: string) => fetch(`${base}${path}`, { headers: { cookie }, redirect: 'manual' });
 
 describe.skipIf(!creds.length)('login and route guards (needs dev server)', () => {
 	it('rejects a wrong password with a generic message', async (ctx) => {
@@ -62,6 +43,22 @@ describe.skipIf(!creds.length)('login and route guards (needs dev server)', () =
 		expect(page.status).toBe(200);
 		const html = await page.text();
 		for (const t of creds.filter((c) => c.role === 'team')) expect(html).toContain(t.name);
+	});
+
+	it('each team sees its own real content on every team page', async (ctx) => {
+		if (!up) ctx.skip();
+		const pals = (await login('Paycheck Pals')).cookie;
+		for (const path of ['/home', '/challenges', '/product/overview', '/product/discover', '/product/decisions', '/academy']) {
+			const res = await get(path, pals);
+			expect(res.status, path).toBe(200);
+			const html = await res.text();
+			expect(html, path).toContain('Paycheck Pals');
+			expect(html, path).not.toContain('shared move-in hub'); // Nestled's private description
+		}
+		expect(await (await get('/home', pals)).text()).toContain('Financial Independence');
+
+		const nestled = (await login('Nestled')).cookie;
+		expect(await (await get('/product/overview', nestled)).text()).toContain('shared move-in hub');
 	});
 
 	it('signed-out visitors are sent to login with a return path', async (ctx) => {
