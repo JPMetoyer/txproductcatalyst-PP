@@ -7,6 +7,7 @@
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import MilestoneStatusBadge from '$lib/components/ui/MilestoneStatusBadge.svelte';
 	import { phaseMeta } from '$lib/config/phases';
+	import { READINESS } from '$lib/config/demo-day';
 	import { toast } from '$lib/stores/toast.svelte';
 	import type { MilestoneStatus } from '$lib/types/domain';
 	import { fmtDate, relativeDays, timeAgo } from '$lib/utils/format';
@@ -119,7 +120,7 @@
 				{#snippet action()}<Button size="sm" variant="ghost" href="/admin/teams" iconRight={ArrowRight}>Manage</Button>{/snippet}
 				<div class="scroll">
 					<table>
-						<thead><tr><th>Team</th><th>Challenge</th><th>Mentor</th><th>Phase</th>{#if firstMs}<th>M{firstMs.number}</th>{/if}<th>Updated</th></tr></thead>
+						<thead><tr><th>Team</th><th>Challenge</th><th>Mentor</th><th>Phase</th><th>Demo Day</th>{#if firstMs}<th>M{firstMs.number}</th>{/if}<th>Updated</th></tr></thead>
 						<tbody>
 							{#each data.teams as t (t.id)}
 								<tr>
@@ -127,6 +128,7 @@
 									<td>{t.challengeTitle ?? '—'}</td>
 									<td>{t.mentorNames.join(', ') || '—'}</td>
 									<td>{phaseMeta(t.currentPhase).label}</td>
+									<td>{READINESS.find((r) => r.key === t.demoDayReadiness)?.label}</td>
 									{#if firstMs}<td><MilestoneStatusBadge status={statusOf(t.id, firstMs.id)} /></td>{/if}
 									<td class="muted">{timeAgo(t.lastActivityAt, now)}</td>
 								</tr>

@@ -4,6 +4,7 @@
 	import JourneyStrip from './JourneyStrip.svelte';
 	import { JOURNEY, phaseMeta } from '$lib/config/phases';
 	import { timeAgo } from '$lib/utils/format';
+	import { READINESS } from '$lib/config/demo-day';
 	import type { TeamSummary } from '$lib/server/teams';
 
 	let { team, href }: { team: TeamSummary; href: string } = $props();
@@ -30,7 +31,7 @@
 		<p class="blocker"><TriangleAlert size={14} aria-hidden="true" /> {team.blockers[0]}</p>
 	{/if}
 	<footer>
-		<span>Updated {timeAgo(team.lastActivityAt, new Date().toISOString())}</span>
+		<span>Updated {timeAgo(team.lastActivityAt, new Date().toISOString())} · Demo Day: {READINESS.find((r) => r.key === team.demoDayReadiness)?.label}</span>
 		<span class="go">Open <ArrowRight size={14} aria-hidden="true" /></span>
 	</footer>
 </a>

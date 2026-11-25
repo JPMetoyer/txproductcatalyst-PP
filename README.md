@@ -2,7 +2,7 @@
 
 Product management workspace for Texas Product Catalyst's semester Product Project.
 
-**Status:** Phase 3 done. Every screen runs on real data: team workspace with autosave, mentor reviews and comments, and admin management of semesters, challenges, curriculum, milestones, teams and mentors. Phase 4 (Business Model Studio, Feasibility Explorer, Career Center, Demo Day) is next. See [docs/PLAN.md](docs/PLAN.md) for architecture, risks, open questions, and the progress tracker.
+**Status:** Phases 1–4 done. All MVP features from the PRD are built on real data. Phase 5 (deployment to `studio.texasproductcatalyst.org`, mobile QA, admin guide) is next. See [docs/PLAN.md](docs/PLAN.md) for architecture, risks, open questions, and the progress tracker.
 
 ## Run locally
 
@@ -40,6 +40,7 @@ Everything students see is edited under **Admin**:
 
 - **Semester settings:** create the next semester (optionally copying content), set dates and theme, toggle public marketplace browsing, activate, and archive. Archiving keeps all documentation read-only.
 - **Challenge Marketplace / Curriculum / Milestones:** create, edit, reorder, publish/unpublish.
+- **Career Center / Demo Day:** edit shared career resources; set the Demo Day date, location, rubric, checklist and judge questions, and see each team's readiness.
 - **Teams:** create (login + one-time password), rename, set phase, edit rosters, reset credentials, revoke sessions.
 - **Mentors:** create, assign teams, reset password, deactivate.
 
@@ -52,6 +53,7 @@ Everything students see is edited under **Admin**:
 | `src/lib/server/repo.ts` | Database reads for pages (runs as the signed-in user, so RLS applies) |
 | `src/lib/server/validate.ts` | Input validation for every write endpoint |
 | `src/routes/api/` | Save endpoints: fields, logs, decisions, tasks, milestone readiness |
+| `src/lib/tools/` | Business Model Studio math (unit-tested) and Feasibility Explorer areas |
 | `src/lib/server/teams.ts`, `admin.ts` | Dashboard summaries and shared admin-editor helpers |
 | `scripts/seed-data.ts` | Demo data loaded by `npm run db:seed` |
 | `src/lib/stores/workspace.svelte.ts` | My Product autosave state |

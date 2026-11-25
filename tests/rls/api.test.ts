@@ -95,3 +95,15 @@ describe.skipIf(!creds.length)('save endpoints (needs dev server)', () => {
 		expect((await api(laptopA, 'POST', '/api/tasks', { teamId: onboard.id, title: 'x' })).status).toBe(403);
 	});
 });
+
+describe.skipIf(!creds.length)('mentors get "not allowed", not a fake conflict (needs dev server)', () => {
+	it('log and decision updates by a mentor return 403', async (ctx) => {
+		if (!(await serverUp())) ctx.skip();
+		const priya = (await login('Priya Raman')).cookie;
+		const p = await productOf('Nestled');
+		const { data: log } = await admin.from('log_entries').select('id, kind, version').eq('product_id', p.products.id).limit(1).single();
+		expect((await api(priya, 'PATCH', '/api/product/logs', { id: log!.id, kind: log!.kind, data: {}, expectedVersion: log!.version })).status).toBe(403);
+		const { data: d } = await admin.from('product_decisions').select('*').eq('product_id', p.products.id).limit(1).single();
+		expect((await api(priya, 'PATCH', '/api/product/decisions', { id: d!.id, title: 'x', phase: d!.phase, status: d!.status, version: d!.version })).status).toBe(403);
+	});
+});

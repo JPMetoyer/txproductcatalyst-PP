@@ -6,7 +6,7 @@
 
 	import type { Lesson } from '$lib/types/domain';
 
-	let { lessons: all, today: t, linkToProduct = true }: { lessons: Lesson[]; today: string; linkToProduct?: boolean } = $props();
+	let { lessons: all, today: t, linkToProduct = true, base = '/academy' }: { lessons: Lesson[]; today: string; linkToProduct?: boolean; base?: string } = $props();
 	const lessons = $derived(all.filter((l) => l.published).sort((a, b) => a.gmNumber - b.gmNumber));
 	const upcoming = $derived(lessons.find((l) => l.scheduledDate != null && l.scheduledDate >= t));
 </script>
@@ -17,7 +17,7 @@
 			<span class="gm">GM{l.gmNumber}</span>
 			<div class="body">
 				<div class="row">
-					<h2>{l.title}</h2>
+					<h2><a class="title" href="{base}/{l.id}">{l.title}</a></h2>
 					{#if l === upcoming}<Badge tone="pink">Up next</Badge>{/if}
 				</div>
 				<p class="date">{l.scheduledDate ? fmtDate(l.scheduledDate) : 'Date to be announced'}</p>
@@ -78,6 +78,16 @@
 	}
 	h2 {
 		font-size: var(--fs-md);
+	}
+	.title {
+		display: inline;
+		font-size: inherit;
+		font-weight: inherit;
+		color: inherit;
+		text-decoration: none;
+		&:hover {
+			text-decoration: underline;
+		}
 	}
 	.date {
 		font-size: var(--fs-xs);

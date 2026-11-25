@@ -71,7 +71,7 @@
 {/if}
 
 {#if phase === 'monetize' || phase === 'scope'}
-	<div class="tool">
+	<a class="tool" href={phase === 'monetize' ? '/product/tools/business-model' : '/product/tools/feasibility'}>
 		{#if phase === 'monetize'}
 			<Calculator size={18} aria-hidden="true" />
 			<span><strong>Business Model Studio</strong> — model subscription, transaction, and licensing revenue against your costs.</span>
@@ -79,8 +79,8 @@
 			<FlaskConical size={18} aria-hidden="true" />
 			<span><strong>Feasibility Explorer</strong> — assess data, integrations, privacy, and complexity risks.</span>
 		{/if}
-		<span class="soon">Coming in Phase 4</span>
-	</div>
+		<span class="open">Open <ArrowRight size={14} aria-hidden="true" /></span>
+	</a>
 {/if}
 
 {#each section.groups as group (group.title)}
@@ -175,16 +175,24 @@
 	}
 	.tool {
 		background: var(--c-surface);
-		border: 1px dashed var(--c-border-strong);
+		border: 1px solid var(--c-border);
+		text-decoration: none;
+		color: inherit;
+		transition: border-color var(--dur);
+		&:hover {
+			border-color: var(--tpc-blue);
+		}
 		span:nth-child(2) {
 			flex: 1;
 			min-width: 200px;
 		}
 	}
-	.soon {
-		font-size: var(--fs-xs);
+	.open {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
 		font-weight: 600;
-		color: var(--c-text-faint);
+		color: var(--deep-blue);
 	}
 	.group {
 		@include card;

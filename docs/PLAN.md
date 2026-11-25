@@ -114,7 +114,7 @@ Account creation, password rotation, and session revocation run **only** in Svel
 | 1. Foundation | Supabase project, migrations + RLS + seed, `@supabase/ssr` auth, role-based route guards, admin account provisioning actions | **Done.** 20 integration tests pass against the live project |
 | 2. Core student experience | Autosave with versioning, logs/tables persisted, decisions, tasks, export (Markdown + print stylesheet) | **Done.** Team pages read and save real data; 27 integration tests |
 | 3. Mentorship & admin | Milestone review flow, field comments, team/roster/mentor management, challenge editor, semester settings | **Done.** Comment threads, flags, phase tracking, roster tools, mentors, semester/challenge/curriculum/milestone editors; 46 tests |
-| 4. Education & tools | PM Academy CMS, Business Model Studio, Feasibility Explorer, Career Center, Demo Day | |
+| 4. Education & tools | PM Academy CMS, Business Model Studio, Feasibility Explorer, Career Center, Demo Day | **Done.** Lesson pages, both tools with conflict-safe autosave, Career Center + editor, Demo Day + editor + readiness; 63 tests |
 | 5. Test & deploy | RLS tests per role, concurrent-edit tests, Playwright smoke tests, mobile QA, Cloudflare Pages deploy to `studio.texasproductcatalyst.org` (CNAME in Netlify DNS), admin guide | |
 
 ---
@@ -129,7 +129,7 @@ Account creation, password rotation, and session revocation run **only** in Svel
 4. **Mentors per team.** Is it always one, or sometimes co-mentors? The plan assumes a join table either way.
 5. **Milestone 4 timing.** After GM7 or after GM8? Should it be configurable per semester? (The plan makes all milestone dates configurable.)
 6. **Archived semesters.** Can a team account from a past semester still log in read-only, or are past semesters visible only to admins and mentors?
-7. **Demo Day readiness.** Is "team readiness status" self-reported by the team, or set by a mentor or admin?
+7. ~~Demo Day readiness~~ **Implemented as team self-reported** (visible to mentors and admins). Easy to change if Academics prefers otherwise.
 8. **Capybara art.** Can the Marketing committee provide official mascot illustrations (SVG/PNG)?
 9. **Roster privacy.** Is a first name plus last initial enough for roster names (to minimize personal information)?
 10. **Team "Settings" page.** Beyond changing the password, what should teams be able to change? (Proposed: team display name only, and a view of the roster.)
@@ -152,9 +152,9 @@ Account creation, password rotation, and session revocation run **only** in Svel
 | Mentor dashboard | ☑ | ☑ |
 | Admin overview | ☑ | ☑ (flags with reason/date/mentor, clearable) |
 | Milestone reviews | ☑ | ☑ (team readiness, mentor outcomes, separate from comments) |
-| Business Model Studio | ☐ | ☐ |
-| Feasibility Explorer | ☐ | ☐ |
-| PM Academy / Career / Demo Day | Academy list ☑; Career and Demo Day are placeholders | Academy ☑; rest in Phase 4 |
+| Business Model Studio | ☑ | ☑ (unit-tested calculations, saved per product) |
+| Feasibility Explorer | ☑ | ☑ (8 areas, no overall score) |
+| PM Academy / Career / Demo Day | ☑ | ☑ (lesson pages, career library, Demo Day prep + configurable rubric) |
 | Admin CRUD, semester config | ☑ | ☑ (semesters, challenges, curriculum, milestones, teams, mentors) |
 | Export | ☑ (Markdown download) | ☑ (from saved data) |
 | PM Academy lesson list | ☑ (read-only) | ☑ (team view) |

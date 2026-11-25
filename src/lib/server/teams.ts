@@ -29,6 +29,7 @@ export interface TeamSummary {
 	blockers: string[];
 	followUps: number;
 	flags: TeamFlag[];
+	demoDayReadiness: string;
 	lastActivityAt: string;
 	productId: string | null;
 }
@@ -58,7 +59,7 @@ export async function loadTeamSummaries(db: SupabaseClient, today: string, semes
 		db
 			.from('teams')
 			.select(
-				'id, name, status, current_phase, created_at, challenge:challenges(title), team_members(active), team_mentors(profile:profiles(display_name)), products(id, updated_at), milestone_reviews(*)'
+				'id, name, status, current_phase, created_at, challenge:challenges(title), team_members(active), team_mentors(profile:profiles(display_name)), products(id, updated_at), milestone_reviews(*), team_demo_day(readiness)'
 			)
 			.eq('semester_id', sem.id)
 			.order('name'),
@@ -88,6 +89,7 @@ export async function loadTeamSummaries(db: SupabaseClient, today: string, semes
 			blockers: reviews.map((r: any) => r.blockers).filter((b: string) => b.trim()),
 			followUps: reviews.filter((r: any) => r.status === 'follow-up').length,
 			flags: openFlags.filter((f) => f.teamId === t.id),
+			demoDayReadiness: (Array.isArray(t.team_demo_day) ? t.team_demo_day[0] : t.team_demo_day)?.readiness ?? 'not-started',
 			lastActivityAt: product?.updated_at ?? t.created_at,
 			productId: product?.id ?? null
 		};

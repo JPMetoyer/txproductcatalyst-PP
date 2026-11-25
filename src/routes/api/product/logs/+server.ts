@@ -1,6 +1,6 @@
 import { error, json } from '@sveltejs/kit';
 import { toLog } from '$lib/server/repo';
-import { body, dbFail, int, logData, logKind, uuid } from '$lib/server/validate';
+import { assertCanWriteProduct, body, dbFail, int, logData, logKind, uuid } from '$lib/server/validate';
 
 /** Add an entry. Body: { productId, kind, position }. */
 export const POST = async ({ request, locals }) => {
@@ -27,6 +27,8 @@ export const PATCH = async ({ request, locals }) => {
 		.select();
 	if (e) dbFail(e, 'entry');
 	if (data.length) return json({ ok: true, entry: toLog(data[0]) });
+	const { data: row } = await locals.supabase.from('log_entries').select('product_id').eq('id', id).maybeSingle();
+	if (row) await assertCanWriteProduct(locals, row.product_id);
 	// Nothing updated: either a teammate saved a newer version, or the row is gone / not ours.
 	const { data: current } = await locals.supabase.from('log_entries').select().eq('id', id).maybeSingle();
 	if (!current) error(404, 'This entry was deleted.');

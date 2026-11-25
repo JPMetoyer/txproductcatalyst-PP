@@ -1,6 +1,6 @@
 import { error, json } from '@sveltejs/kit';
 import { toDecision } from '$lib/server/repo';
-import { body, date, dbFail, decisionStatus, int, MAX_SHORT, phase, text, uuid, bad } from '$lib/server/validate';
+import { assertCanWriteProduct, body, date, dbFail, decisionStatus, int, MAX_SHORT, phase, text, uuid, bad } from '$lib/server/validate';
 
 function fields(b: Record<string, unknown>) {
 	const title = text(b.title, 'Title', 200).trim();
@@ -43,6 +43,7 @@ export const PATCH = async ({ request, locals }) => {
 	if (data.length) return json({ ok: true, decision: toDecision(data[0]) });
 	const { data: current } = await locals.supabase.from('product_decisions').select().eq('id', id).maybeSingle();
 	if (!current) error(404, 'This decision was deleted.');
+	await assertCanWriteProduct(locals, current.product_id);
 	return json({ ok: false, reason: 'conflict', decision: toDecision(current) });
 };
 

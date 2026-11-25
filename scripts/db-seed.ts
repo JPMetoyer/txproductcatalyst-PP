@@ -45,7 +45,9 @@ async function wipe() {
 		'resources', 'announcements', 'teams', 'lessons', 'milestones', 'challenges', 'semesters'
 	]) {
 		const col = t === 'team_mentors' ? 'team_id' : t === 'feasibility_assessments' ? 'product_id' : 'id';
-		must(await db.from(t).delete().not(col, 'is', null), `wipe ${t}`);
+		// Shared resources (semester_id null, e.g. Career Center content) survive a reset.
+		const q = t === 'resources' ? db.from(t).delete().not('semester_id', 'is', null) : db.from(t).delete().not(col, 'is', null);
+		must(await q, `wipe ${t}`);
 	}
 	for (const u of await allSeedUsers()) must(await db.auth.admin.deleteUser(u.id), `delete user ${u.email}`);
 }

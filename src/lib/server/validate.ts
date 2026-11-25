@@ -87,3 +87,13 @@ export function dbFail(e: { code?: string; message: string } | null, what: strin
 	if (e?.code === '42501') error(403, `You don't have permission to change this ${what}.`);
 	error(500, `Could not save ${what}.`);
 }
+
+/**
+ * Rejects with 403 unless the signed-in user may edit this product's documentation.
+ * (A blocked UPDATE just matches zero rows, which would otherwise look like an edit conflict.)
+ */
+export async function assertCanWriteProduct(locals: App.Locals, productId: string) {
+	const { data: teamId } = await locals.supabase.rpc('product_team', { p_product: productId });
+	const { data: ok } = teamId ? await locals.supabase.rpc('can_write_team', { p_team: teamId }) : { data: false };
+	if (ok !== true) error(403, "You don't have permission to change this team's documentation.");
+}

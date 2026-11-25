@@ -261,3 +261,9 @@ export async function loadProduct(db: SupabaseClient, productId: string, teamId:
 		comments: (check(comments, 'comments') as any[]).map(toComment)
 	};
 }
+
+export async function loadLesson(db: SupabaseClient, id: string) {
+	if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+	const l = (await db.from('lessons').select('*').eq('id', id).eq('published', true).maybeSingle()).data;
+	return l ? toLesson(l) : null;
+}

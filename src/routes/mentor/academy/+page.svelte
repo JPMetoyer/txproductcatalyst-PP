@@ -6,4 +6,4 @@
 
 <svelte:head><title>PM Academy · TPC Studio</title></svelte:head>
 <PageHeader title="PM Academy" subtitle="What your teams are learning each week." />
-<LessonList lessons={data.lessons} today={data.today} linkToProduct={false} />
+<LessonList lessons={data.lessons} today={data.today} linkToProduct={false} base="/mentor/academy" />

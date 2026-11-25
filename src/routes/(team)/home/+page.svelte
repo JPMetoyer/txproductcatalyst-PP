@@ -124,7 +124,7 @@
 					{/if}
 				</li>
 				<li><a href="/academy"><FolderOpen size={16} aria-hidden="true" /> Team resources</a></li>
-				<li><a href="/product/monetize"><Calculator size={16} aria-hidden="true" /> Business model calculator</a></li>
+				<li><a href="/product/tools/business-model"><Calculator size={16} aria-hidden="true" /> Business model calculator</a></li>
 			</ul>
 		</Card>
 	</div>
