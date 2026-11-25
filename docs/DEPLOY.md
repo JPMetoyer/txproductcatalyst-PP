@@ -4,7 +4,7 @@ TPC Studio runs entirely on free tiers:
 
 | Piece | Service | Account |
 |---|---|---|
-| Website + server code | Cloudflare Pages (free) | TPC shared email |
+| Website + server code | Cloudflare Pages (free), project `tpc-studio` → `https://tpc-studio-87j.pages.dev` | TPC shared email |
 | Database + logins | Supabase (free) | TPC shared email |
 | Code | GitHub | Currently `JPMetoyer/txproductcatalyst-PP`. Move to a TPC organization later. |
 | Domain | `studio.texasproductcatalyst.org`. DNS stays on Netlify. | Whoever manages the Netlify site |
@@ -74,7 +74,7 @@ The main website on Netlify is unaffected.
 
 ## 5. Keep-alive and CI (GitHub Actions)
 
-- **`.github/workflows/keep-alive.yml`** pings `/api/health` every 3 days so the free Supabase project doesn't pause during breaks. Until the custom domain works, set a repository **variable** `STUDIO_URL` (Settings → Secrets and variables → Actions → Variables) to the `pages.dev` address.
+- **`.github/workflows/keep-alive.yml`** pings `/api/health` every 3 days so the free Supabase project doesn't pause during breaks. Until the custom domain works, set a repository **variable** `STUDIO_URL` (Settings → Secrets and variables → Actions → Variables) to the `pages.dev` address (`https://tpc-studio-87j.pages.dev`).
   GitHub turns off scheduled workflows after 60 days without commits and emails the owner. Re-enable it from the Actions tab.
 - **`.github/workflows/ci.yml`** type-checks, runs unit tests, and builds on every push.
 
