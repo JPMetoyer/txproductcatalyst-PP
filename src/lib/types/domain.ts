@@ -187,10 +187,16 @@ export interface FieldComment {
 	id: ID;
 	productId: ID;
 	fieldKey: string;
+	/** Set on replies; null for the comment that starts a thread. */
+	parentId: ID | null;
+	authorId: ID;
 	authorName: string;
+	authorRole: Role | null;
 	body: string;
 	createdAt: ISODateTime;
+	/** Only meaningful on thread roots. */
 	resolved: boolean;
+	resolvedAt: ISODateTime | null;
 }
 
 export interface FeedbackItem {

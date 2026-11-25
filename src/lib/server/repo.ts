@@ -107,6 +107,23 @@ export const toDecision = (d: any): Decision => ({
 	version: d.version
 });
 
+export const toComment = (c: any): FieldComment => ({
+	id: c.id,
+	productId: c.product_id,
+	fieldKey: c.field_key,
+	parentId: c.parent_id,
+	authorId: c.author_profile_id,
+	authorName: c.author?.display_name ?? 'Academics Committee',
+	authorRole: c.author?.role ?? null,
+	body: c.body,
+	createdAt: c.created_at,
+	resolved: c.resolved,
+	resolvedAt: c.resolved_at
+});
+
+export const COMMENT_SELECT =
+	'id, product_id, field_key, parent_id, author_profile_id, body, resolved, resolved_at, created_at, author:profiles!field_comments_author_profile_id_fkey(display_name, role)';
+
 export const toTask = (t: any): Task => ({
 	id: t.id,
 	teamId: t.team_id,
@@ -218,9 +235,8 @@ export async function loadProduct(db: SupabaseClient, productId: string, teamId:
 		db.from('product_decisions').select('*').eq('product_id', productId).order('decided_on', { ascending: false }),
 		db
 			.from('field_comments')
-			.select('id, product_id, field_key, body, resolved, created_at, author:profiles(display_name)')
+			.select(COMMENT_SELECT)
 			.eq('product_id', productId)
-			.eq('resolved', false)
 			.order('created_at')
 	]);
 	const f: ProductFields = {};
@@ -236,14 +252,6 @@ export async function loadProduct(db: SupabaseClient, productId: string, teamId:
 			logs: check(logs, 'logs').map(toLog),
 			decisions: check(decisions, 'decisions').map(toDecision)
 		},
-		comments: (check(comments, 'comments') as any[]).map((c) => ({
-			id: c.id,
-			productId: c.product_id,
-			fieldKey: c.field_key,
-			authorName: c.author?.display_name ?? 'Academics Committee',
-			body: c.body,
-			createdAt: c.created_at,
-			resolved: c.resolved
-		}))
+		comments: (check(comments, 'comments') as any[]).map(toComment)
 	};
 }

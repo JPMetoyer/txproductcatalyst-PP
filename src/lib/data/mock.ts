@@ -547,7 +547,11 @@ export const fieldComments: FieldComment[] = [
 		id: 'fc-1',
 		productId: 'prod-1',
 		fieldKey: 'ov.customer',
+		parentId: null,
+		authorId: 'p-mentor-1',
 		authorName: 'Priya Raman',
+		authorRole: 'mentor',
+		resolvedAt: null,
 		body: 'This is still marked as an assumption — your interview log suggests it’s close to validated. What would you need to confirm it?',
 		createdAt: '2027-02-12T20:12:00Z',
 		resolved: false

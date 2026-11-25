@@ -88,7 +88,7 @@
 		<h3 id="g-{group.title}">{group.title}</h3>
 		<div class="fields">
 			{#each group.fields as def (def.key)}
-				<FieldInput {def} comments={workspace.comments.filter((c) => c.fieldKey === def.key)} readonly={workspace.readonly} />
+				<FieldInput {def} readonly={workspace.readonly} />
 			{/each}
 		</div>
 	</section>

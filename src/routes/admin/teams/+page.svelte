@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Plus, KeyRound, LogOut, Copy, TriangleAlert } from '@lucide/svelte';
+	import { Plus, KeyRound, LogOut, Copy, TriangleAlert, X, UserPlus } from '@lucide/svelte';
+	import { JOURNEY, phaseMeta } from '$lib/config/phases';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
@@ -15,15 +16,20 @@
 	let busy = $state(false);
 	let confirmTarget = $state<{ id: string; name: string; kind: 'reset' | 'revoke' } | null>(null);
 	let shownCredentials = $state<{ team: string; login: string; password: string } | null>(null);
+	let memberTarget = $state<{ id: string; name: string; teamId: string; teamName: string } | null>(null);
+	let moveTo = $state('');
 
 	// Show results of actions: credentials once in a modal, everything else as a toast.
 	$effect(() => {
 		if (!form) return;
 		if ('error' in form && form.error) toast(form.error, 'error', 6000);
-		else if ('credentials' in form && form.credentials) {
-			shownCredentials = form.credentials;
-			creating = false;
-		} else if ('message' in form && form.message) toast(form.message, 'success');
+		else {
+			if ('message' in form && form.message) toast(form.message, 'success');
+			if ('credentials' in form && form.credentials) {
+				shownCredentials = form.credentials;
+				creating = false;
+			}
+		}
 	});
 
 	const submit: SubmitFunction = () => {
@@ -32,6 +38,7 @@
 			await update({ reset: false });
 			busy = false;
 			confirmTarget = null;
+			memberTarget = null;
 		};
 	};
 
@@ -54,13 +61,37 @@
 		{#each data.teams as t (t.id)}
 			<article>
 				<div class="main">
-					<h2>{t.name}</h2>
+					<form class="rename" method="POST" action="?/rename" use:enhance={submit}>
+						<input type="hidden" name="teamId" value={t.id} />
+						<label class="sr-only" for="name-{t.id}">Team name</label>
+						<input id="name-{t.id}" name="name" value={t.name} required minlength="2" maxlength="80" onchange={(e) => e.currentTarget.form?.requestSubmit()} />
+					</form>
 					<p class="login">Login: <code>{t.login ?? '—'}</code></p>
 					<div class="roster">
-						{#each t.roster as m (m.id)}<span class="member"><Avatar name={m.name} size={22} />{m.name}</span>{:else}<span class="muted">No roster yet</span>{/each}
+						{#each t.roster as m (m.id)}
+							<span class="member">
+								<Avatar name={m.name} size={22} />{m.name}
+								<button type="button" class="x" aria-label="Remove or move {m.name}" onclick={() => { memberTarget = { id: m.id, name: m.name, teamId: t.id, teamName: t.name }; moveTo = ''; }}><X size={12} /></button>
+							</span>
+						{:else}<span class="muted">No roster yet</span>{/each}
+						<form class="add-member" method="POST" action="?/addMember" use:enhance={submit}>
+							<input type="hidden" name="teamId" value={t.id} />
+							<label class="sr-only" for="add-{t.id}">Add member to {t.name}</label>
+							<input id="add-{t.id}" name="name" placeholder="Add member" maxlength="80" required />
+							<button type="submit" aria-label="Add member"><UserPlus size={14} /></button>
+						</form>
 					</div>
 				</div>
 				<div class="assign">
+					<form method="POST" action="?/phase" use:enhance={submit} class="span">
+						<input type="hidden" name="teamId" value={t.id} />
+						<label>
+							<span>Phase <em>(calendar: {phaseMeta(data.recommended).label})</em></span>
+							<select name="phase" value={t.currentPhase} onchange={(e) => e.currentTarget.form?.requestSubmit()}>
+								{#each JOURNEY as p}<option value={p}>{phaseMeta(p).label}</option>{/each}
+							</select>
+						</label>
+					</form>
 					<form method="POST" action="?/assign" use:enhance={submit}>
 						<input type="hidden" name="teamId" value={t.id} />
 						<label>
@@ -129,6 +160,27 @@
 	{/snippet}
 </Modal>
 
+<Modal open={!!memberTarget} title={memberTarget ? `Change ${memberTarget.name}'s team` : ''} onclose={() => (memberTarget = null)}>
+	{#if memberTarget}
+		<form id="member-form" method="POST" action="?/changeMember" use:enhance={submit} class="form">
+			<input type="hidden" name="memberId" value={memberTarget.id} />
+			<label>
+				<span>What should happen?</span>
+				<select name="toTeamId" bind:value={moveTo}>
+					<option value="">Remove from {memberTarget.teamName}</option>
+					{#each data.teams.filter((x) => x.id !== memberTarget!.teamId) as o (o.id)}<option value={o.id}>Move to {o.name}</option>{/each}
+				</select>
+			</label>
+			<p class="warn"><TriangleAlert size={16} aria-hidden="true" /> <span><strong>Recommended:</strong> reset {memberTarget.teamName}'s password and sign out all devices, so {memberTarget.name} can no longer open the shared account. The team's documentation is never deleted.</span></p>
+			<label class="check"><input type="checkbox" name="rotate" checked /> Reset password and revoke sessions for {memberTarget.teamName}</label>
+		</form>
+	{/if}
+	{#snippet footer()}
+		<Button variant="ghost" onclick={() => (memberTarget = null)}>Cancel</Button>
+		<Button variant="primary" type="submit" form="member-form" disabled={busy}>{moveTo ? 'Move member' : 'Remove member'}</Button>
+	{/snippet}
+</Modal>
+
 <Modal open={!!shownCredentials} title="Share these credentials" onclose={() => (shownCredentials = null)}>
 	{#if shownCredentials}
 		<p>Send these to <strong>{shownCredentials.team}</strong> privately (e.g. a DM to one member). This password won't be shown again.</p>
@@ -155,8 +207,88 @@
 			align-items: center;
 		}
 	}
-	h2 {
+	.rename input {
+		font-family: var(--font-display);
+		font-weight: 700;
 		font-size: var(--fs-md);
+		border: 1px solid transparent;
+		border-radius: var(--r-sm);
+		padding: 2px 6px;
+		margin-left: -6px;
+		background: none;
+		width: 100%;
+		max-width: 320px;
+		&:hover {
+			border-color: var(--c-border);
+		}
+		&:focus {
+			@include focus-ring;
+			outline-offset: 0;
+		}
+	}
+	.x {
+		display: grid;
+		place-items: center;
+		width: 18px;
+		height: 18px;
+		border: 0;
+		border-radius: 50%;
+		background: none;
+		color: var(--c-text-faint);
+		cursor: pointer;
+		&:hover {
+			background: var(--tint-red);
+			color: var(--deep-red);
+		}
+	}
+	.add-member {
+		display: inline-flex;
+		align-items: center;
+		border: 1px dashed var(--c-border-strong);
+		border-radius: 999px;
+		padding: 0 2px 0 8px;
+		input {
+			border: 0;
+			background: none;
+			width: 110px;
+			font-size: var(--fs-xs);
+			padding: 3px 0;
+			&:focus {
+				outline: none;
+			}
+		}
+		button {
+			display: grid;
+			place-items: center;
+			width: 22px;
+			height: 22px;
+			border: 0;
+			border-radius: 50%;
+			background: none;
+			cursor: pointer;
+			color: var(--c-text-muted);
+			&:hover {
+				background: var(--c-surface-2);
+			}
+		}
+		&:focus-within {
+			@include focus-ring;
+		}
+	}
+	.span {
+		grid-column: 1 / -1;
+	}
+	em {
+		font-style: normal;
+		text-transform: none;
+		letter-spacing: 0;
+		font-weight: 500;
+	}
+	.check {
+		flex-direction: row !important;
+		align-items: center;
+		gap: var(--sp-2) !important;
+		font-weight: 500 !important;
 	}
 	.login {
 		font-size: var(--fs-xs);

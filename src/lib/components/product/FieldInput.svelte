@@ -1,18 +1,17 @@
 <script lang="ts">
-	import { MessageSquare, TriangleAlert, ExternalLink } from '@lucide/svelte';
+	import { TriangleAlert, ExternalLink } from '@lucide/svelte';
 	import SaveIndicator from '$lib/components/ui/SaveIndicator.svelte';
+	import CommentThreads from './CommentThreads.svelte';
 	import { workspace } from '$lib/stores/workspace.svelte';
 	import type { FieldDef } from '$lib/config/product-schema';
-	import type { FieldComment, FieldEvidence } from '$lib/types/domain';
-	import { fmtShort } from '$lib/utils/format';
+	import type { FieldEvidence } from '$lib/types/domain';
 
 	interface Props {
 		def: FieldDef;
-		comments?: FieldComment[];
 		/** Mentor / admin view: render values without inputs. */
 		readonly?: boolean;
 	}
-	let { def, comments = [], readonly = false }: Props = $props();
+	let { def, readonly = false }: Props = $props();
 
 	const id = $derived(`f-${def.key.replace('.', '-')}`);
 	const value = $derived(workspace.value(def.key));
@@ -90,12 +89,7 @@
 		<button type="button" class="retry" onclick={() => workspace.retry(def.key)}>Couldn't save. Retry</button>
 	{/if}
 
-	{#each comments as c (c.id)}
-		<div class="comment">
-			<MessageSquare size={14} aria-hidden="true" />
-			<div><strong>{c.authorName}</strong> <span class="when">{fmtShort(c.createdAt.slice(0, 10))}</span><p>{c.body}</p></div>
-		</div>
-	{/each}
+	<CommentThreads fieldKey={def.key} label={def.label} />
 </div>
 
 <style lang="scss">
@@ -293,22 +287,5 @@
 		font-size: var(--fs-xs);
 		cursor: pointer;
 		text-decoration: underline;
-	}
-	.comment {
-		display: flex;
-		gap: var(--sp-2);
-		padding: var(--sp-2) var(--sp-3);
-		border-radius: var(--r-md);
-		background: var(--tint-lavender);
-		font-size: var(--fs-sm);
-		:global(svg) {
-			flex-shrink: 0;
-			margin-top: 3px;
-			color: var(--deep-lavender);
-		}
-		.when {
-			font-size: var(--fs-xs);
-			color: var(--c-text-muted);
-		}
 	}
 </style>

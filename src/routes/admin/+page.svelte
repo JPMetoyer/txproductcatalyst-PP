@@ -1,132 +1,162 @@
 <script lang="ts">
-	import { ArrowRight, TriangleAlert, Plus } from '@lucide/svelte';
+	import { enhance } from '$app/forms';
+	import { ArrowRight, TriangleAlert, Plus, Flag } from '@lucide/svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
+	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import MilestoneStatusBadge from '$lib/components/ui/MilestoneStatusBadge.svelte';
+	import { phaseMeta } from '$lib/config/phases';
+	import { toast } from '$lib/stores/toast.svelte';
 	import type { MilestoneStatus } from '$lib/types/domain';
-	import * as data from '$lib/data';
 	import { fmtDate, relativeDays, timeAgo } from '$lib/utils/format';
 
-	const today = data.today();
-	const semester = data.getSemester();
-	const teams = data.getTeams().filter((t) => t.status === 'active');
-	const memberCount = teams.reduce((n, t) => n + data.getRoster(t.id).length, 0);
-	const mentors = data.getMentors().filter((m) => m.active);
-	const milestones = data.getMilestones();
-	const upcoming = milestones.filter((m) => m.targetDate >= today);
-	const support = data.teamsNeedingSupport();
-	const activity = data
-		.getReviews()
-		.filter((r) => r.reviewedAt || r.readyAt)
-		.map((r) => ({ ...r, at: (r.reviewedAt ?? r.readyAt)!, team: data.getTeam(r.teamId)!, ms: milestones.find((m) => m.id === r.milestoneId)! }))
-		.sort((a, b) => b.at.localeCompare(a.at));
+	let { data, form } = $props();
+	const now = new Date().toISOString();
+	const upcoming = $derived(data.milestones.filter((m) => !m.targetDate || m.targetDate >= data.today));
+	const firstMs = $derived(data.milestones[0]);
+	const count = (msId: string, s: MilestoneStatus) =>
+		s === 'upcoming'
+			? data.teams.length - data.reviews.filter((r) => r.milestoneId === msId && r.status !== 'upcoming').length
+			: data.reviews.filter((r) => r.milestoneId === msId && r.status === s).length;
+	const statusOf = (teamId: string, msId: string) => data.reviews.find((r) => r.teamId === teamId && r.milestoneId === msId)?.status ?? 'upcoming';
 
-	const statusCount = (msId: string, s: MilestoneStatus) => data.getReviews().filter((r) => r.milestoneId === msId && r.status === s).length;
+	$effect(() => {
+		if (!form) return;
+		if ('error' in form && form.error) toast(form.error, 'error');
+		else if ('ok' in form && form.ok) toast(form.ok, 'success');
+	});
 </script>
 
 <svelte:head><title>Admin overview · TPC Studio</title></svelte:head>
 
-<PageHeader eyebrow="{semester.name} · {semester.theme}" title="Semester overview">
-	{#snippet actions()}
-		<Button href="/admin/teams" icon={Plus} variant="primary">Create team</Button>
-	{/snippet}
-</PageHeader>
+{#if !data.semester}
+	<PageHeader title="Semester overview" />
+	<EmptyState title="No active semester" body="Create or activate a semester to get started.">
+		<Button variant="primary" href="/admin/semester">Semester settings</Button>
+	</EmptyState>
+{:else}
+	<PageHeader eyebrow="{data.semester.name} · {data.semester.theme}" title="Semester overview">
+		{#snippet actions()}
+			<Button href="/admin/teams" icon={Plus} variant="primary">Create team</Button>
+		{/snippet}
+	</PageHeader>
 
-<div class="stats">
-	<a href="/admin/teams"><strong>{teams.length}</strong><span>Active teams</span></a>
-	<a href="/admin/teams"><strong>{memberCount}</strong><span>Team members</span></a>
-	<a href="/admin/mentors"><strong>{mentors.length}</strong><span>Mentors</span></a>
-	<a href="#support" class:warn={support.length > 0}><strong>{support.length}</strong><span>Need support</span></a>
-</div>
+	<div class="stats">
+		<a href="/admin/teams"><strong>{data.teams.length}</strong><span>Active teams</span></a>
+		<a href="/admin/teams"><strong>{data.memberCount}</strong><span>Team members</span></a>
+		<a href="/admin/mentors"><strong>{data.mentorCount}</strong><span>Mentors</span></a>
+		<a href="#support" class:warn={data.flags.length > 0}><strong>{data.flags.length}</strong><span>Flagged for support</span></a>
+	</div>
 
-<div class="grid">
-	<div class="col">
-		<Card title="Upcoming milestones" id="milestones">
-			<div class="ms-list">
-				{#each upcoming as m (m.id)}
-					{@const reviewed = statusCount(m.id, 'reviewed') + statusCount(m.id, 'follow-up')}
-					<div class="ms">
-						<div class="ms-head">
-							<div>
-								<strong>M{m.number} · {m.title}</strong>
-								<span>{fmtDate(m.targetDate)} · {relativeDays(today, m.targetDate)}</span>
-							</div>
-							<span class="count">{reviewed}/{teams.length} reviewed</span>
-						</div>
-						<div class="bar" role="img" aria-label="{statusCount(m.id, 'reviewed')} reviewed, {statusCount(m.id, 'follow-up')} follow-up, {statusCount(m.id, 'ready')} ready, of {teams.length} teams">
-							<span class="g" style:flex={statusCount(m.id, 'reviewed')}></span>
-							<span class="o" style:flex={statusCount(m.id, 'follow-up')}></span>
-							<span class="b" style:flex={statusCount(m.id, 'ready')}></span>
-							<span class="n" style:flex={statusCount(m.id, 'upcoming')}></span>
-						</div>
-						<div class="legend">
-							<span><i class="g"></i>Reviewed {statusCount(m.id, 'reviewed')}</span>
-							<span><i class="o"></i>Follow-up {statusCount(m.id, 'follow-up')}</span>
-							<span><i class="b"></i>Ready {statusCount(m.id, 'ready')}</span>
-							<span><i class="n"></i>Upcoming {statusCount(m.id, 'upcoming')}</span>
-						</div>
-					</div>
-				{/each}
-			</div>
-		</Card>
-
-		<Card title="All teams" id="teams" pad={false}>
-			{#snippet action()}<Button size="sm" variant="ghost" href="/admin/teams" iconRight={ArrowRight}>Manage</Button>{/snippet}
-			<div class="scroll">
-				<table>
-					<thead><tr><th>Team</th><th>Challenge</th><th>Mentor</th><th>Phase</th><th>M1</th><th>Last active</th></tr></thead>
-					<tbody>
-						{#each teams as t (t.id)}
-							<tr>
-								<td><strong>{t.name}</strong></td>
-								<td>{data.getChallenge(t.challengeId ?? '')?.title ?? '—'}</td>
-								<td>{t.mentorIds.map((id) => data.getMentor(id)?.displayName).join(', ') || '—'}</td>
-								<td>{t.currentPhase[0].toUpperCase() + t.currentPhase.slice(1)}</td>
-								<td><MilestoneStatusBadge status={data.getReview(t.id, 'ms-1')?.status ?? 'upcoming'} /></td>
-								<td class="muted">{timeAgo(t.lastActivityAt, today)}</td>
-							</tr>
+	<div class="grid">
+		<div class="col">
+			<Card title="Teams requiring support" id="support" tone={data.flags.length ? 'highlight' : 'default'}>
+				{#if data.flags.length}
+					<ul class="flags">
+						{#each data.flags as f (f.id)}
+							<li>
+								<Flag size={16} aria-hidden="true" />
+								<div class="grow">
+									<strong>{f.teamName}</strong>
+									<p>{f.reason}</p>
+									<span>Flagged by {f.flaggedBy} · {fmtDate(f.createdAt.slice(0, 10))}</span>
+								</div>
+								<form method="POST" action="?/clearFlag" use:enhance>
+									<input type="hidden" name="id" value={f.id} />
+									<Button size="sm" type="submit">Clear</Button>
+								</form>
+							</li>
 						{/each}
-					</tbody>
-				</table>
-			</div>
-		</Card>
-	</div>
+					</ul>
+				{:else}
+					<p class="muted">No teams flagged by mentors.</p>
+				{/if}
+				{#if data.concerns.length}
+					<p class="lbl">Other signals</p>
+					<ul class="list">
+						{#each data.concerns as c (c.id)}
+							<li><TriangleAlert size={14} aria-hidden="true" /><div><strong>{c.name}</strong><span>{c.text}</span></div></li>
+						{/each}
+					</ul>
+				{/if}
+			</Card>
 
-	<div class="col">
-		<Card title="Teams requiring support" id="support">
-			{#if support.length}
-				<ul class="list">
-					{#each support as t (t.id)}
-						{@const r = data.getReviews(t.id).find((x) => x.blockers || x.status === 'follow-up')}
-						<li>
-							<TriangleAlert size={16} aria-hidden="true" />
+			<Card title="Upcoming milestones" id="milestones">
+				{#if upcoming.length}
+					<div class="ms-list">
+						{#each upcoming as m (m.id)}
+							{@const reviewed = count(m.id, 'reviewed') + count(m.id, 'follow-up')}
 							<div>
-								<strong>{t.name}</strong>
-								<span>{r?.blockers || r?.nextSteps}</span>
+								<div class="ms-head">
+									<div>
+										<strong>M{m.number} · {m.title}</strong>
+										<span>{m.targetDate ? `${fmtDate(m.targetDate)} · ${relativeDays(data.today, m.targetDate)}` : 'No date set'}</span>
+									</div>
+									<span class="count">{reviewed}/{data.teams.length} reviewed</span>
+								</div>
+								<div class="bar" role="img" aria-label="{count(m.id, 'reviewed')} reviewed, {count(m.id, 'follow-up')} follow-up, {count(m.id, 'ready')} ready, {count(m.id, 'upcoming')} upcoming">
+									<span class="g" style:flex={count(m.id, 'reviewed')}></span>
+									<span class="o" style:flex={count(m.id, 'follow-up')}></span>
+									<span class="b" style:flex={count(m.id, 'ready')}></span>
+									<span class="n" style:flex={count(m.id, 'upcoming')}></span>
+								</div>
+								<div class="legend">
+									<span><i class="g"></i>Reviewed {count(m.id, 'reviewed')}</span>
+									<span><i class="o"></i>Follow-up {count(m.id, 'follow-up')}</span>
+									<span><i class="b"></i>Ready {count(m.id, 'ready')}</span>
+									<span><i class="n"></i>Upcoming {count(m.id, 'upcoming')}</span>
+								</div>
 							</div>
-						</li>
-					{/each}
-				</ul>
-			{:else}
-				<p class="muted">No teams flagged.</p>
-			{/if}
-		</Card>
+						{/each}
+					</div>
+				{:else}
+					<p class="muted">No upcoming milestones. <a href="/admin/milestones">Set milestone dates</a>.</p>
+				{/if}
+			</Card>
 
-		<Card title="Recent milestone activity" id="activity">
-			<ul class="list plain">
-				{#each activity.slice(0, 6) as a (a.id)}
-					<li>
-						<div>
-							<strong>{a.team.name}</strong>
-							<span>{a.status === 'ready' ? 'marked ready for' : a.status === 'follow-up' ? 'needs follow-up on' : 'reviewed for'} {a.ms.title} · {timeAgo(a.at, today)}</span>
-						</div>
-					</li>
-				{/each}
-			</ul>
-		</Card>
+			<Card title="All teams" id="teams" pad={false}>
+				{#snippet action()}<Button size="sm" variant="ghost" href="/admin/teams" iconRight={ArrowRight}>Manage</Button>{/snippet}
+				<div class="scroll">
+					<table>
+						<thead><tr><th>Team</th><th>Challenge</th><th>Mentor</th><th>Phase</th>{#if firstMs}<th>M{firstMs.number}</th>{/if}<th>Updated</th></tr></thead>
+						<tbody>
+							{#each data.teams as t (t.id)}
+								<tr>
+									<td><strong>{t.name}</strong></td>
+									<td>{t.challengeTitle ?? '—'}</td>
+									<td>{t.mentorNames.join(', ') || '—'}</td>
+									<td>{phaseMeta(t.currentPhase).label}</td>
+									{#if firstMs}<td><MilestoneStatusBadge status={statusOf(t.id, firstMs.id)} /></td>{/if}
+									<td class="muted">{timeAgo(t.lastActivityAt, now)}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			</Card>
+		</div>
+
+		<div class="col">
+			<Card title="Recent milestone activity" id="activity">
+				{#if data.activity.length}
+					<ul class="list plain">
+						{#each data.activity as a (a.id)}
+							<li>
+								<div>
+									<strong>{a.teamName}</strong>
+									<span>{a.status === 'ready' ? 'marked ready for' : a.status === 'follow-up' ? 'needs follow-up on' : 'reviewed for'} {a.msTitle} · {timeAgo(a.at, now)}</span>
+								</div>
+							</li>
+						{/each}
+					</ul>
+				{:else}
+					<p class="muted">Nothing yet this semester.</p>
+				{/if}
+			</Card>
+		</div>
 	</div>
-</div>
+{/if}
 
 <style lang="scss">
 	.stats {
@@ -147,7 +177,7 @@
 				border-color: var(--c-border-strong);
 			}
 			&.warn {
-				background: var(--tint-orange);
+				background: var(--tint-red);
 				border-color: transparent;
 			}
 		}
@@ -175,6 +205,42 @@
 	}
 	:global(#teams > header) {
 		padding: var(--sp-5) var(--sp-5) 0;
+	}
+	.flags {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		gap: var(--sp-3);
+		li {
+			display: flex;
+			gap: var(--sp-3);
+			align-items: flex-start;
+			padding: var(--sp-3);
+			border-radius: var(--r-md);
+			background: var(--tint-red);
+			:global(svg) {
+				color: var(--deep-red);
+				flex-shrink: 0;
+				margin-top: 3px;
+			}
+		}
+		p {
+			font-size: var(--fs-sm);
+			margin: 2px 0;
+		}
+		span {
+			font-size: var(--fs-xs);
+			color: var(--c-text-muted);
+		}
+	}
+	.grow {
+		flex: 1;
+		min-width: 0;
+	}
+	.lbl {
+		@include eyebrow;
+		margin: var(--sp-4) 0 var(--sp-2);
 	}
 	.ms-list {
 		display: flex;

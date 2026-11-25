@@ -1,37 +1,36 @@
 <script lang="ts">
-	import { ArrowRight, TriangleAlert } from '@lucide/svelte';
+	import { ArrowRight, TriangleAlert, Flag } from '@lucide/svelte';
 	import MilestoneStatusBadge from '$lib/components/ui/MilestoneStatusBadge.svelte';
 	import JourneyStrip from './JourneyStrip.svelte';
-	import { phaseMeta } from '$lib/config/phases';
-	import * as data from '$lib/data';
+	import { JOURNEY, phaseMeta } from '$lib/config/phases';
 	import { timeAgo } from '$lib/utils/format';
-	import type { Team } from '$lib/types/domain';
+	import type { TeamSummary } from '$lib/server/teams';
 
-	let { team, href }: { team: Team; href: string } = $props();
-	const challenge = $derived(data.getChallenge(team.challengeId ?? ''));
-	const ms = data.getNextMilestone();
-	const review = $derived(data.getReview(team.id, ms.id));
-	const blockers = $derived(data.getReviews(team.id).filter((r) => r.blockers.trim()).map((r) => r.blockers));
-	const roster = $derived(data.getRoster(team.id));
+	let { team, href }: { team: TeamSummary; href: string } = $props();
+	const started = $derived(JOURNEY.slice(0, JOURNEY.indexOf(team.currentPhase) + 1));
+	const behind = $derived(JOURNEY.indexOf(team.currentPhase) < JOURNEY.indexOf(team.recommendedPhase));
 </script>
 
 <a class="tc" {href}>
 	<header>
 		<div>
 			<h3>{team.name}</h3>
-			<p>{challenge?.title ?? 'No challenge assigned'} · {roster.length} members</p>
+			<p>{team.challengeTitle ?? 'No challenge assigned'} · {team.rosterCount} members</p>
 		</div>
-		{#if review}<MilestoneStatusBadge status={review.status} />{/if}
+		<MilestoneStatusBadge status={team.nextMilestoneStatus} />
 	</header>
 	<div class="journey">
-		<span>{phaseMeta(team.currentPhase).label}</span>
-		<JourneyStrip current={team.currentPhase} started={team.phasesStarted} compact />
+		<span>{phaseMeta(team.currentPhase).label}{#if behind}<em> · calendar suggests {phaseMeta(team.recommendedPhase).label}</em>{/if}</span>
+		<JourneyStrip current={team.currentPhase} {started} compact />
 	</div>
-	{#if blockers.length}
-		<p class="blocker"><TriangleAlert size={14} aria-hidden="true" /> {blockers[0]}</p>
+	{#each team.flags as f (f.id)}
+		<p class="flag"><Flag size={14} aria-hidden="true" /> Flagged: {f.reason}</p>
+	{/each}
+	{#if team.blockers.length}
+		<p class="blocker"><TriangleAlert size={14} aria-hidden="true" /> {team.blockers[0]}</p>
 	{/if}
 	<footer>
-		<span>Active {timeAgo(team.lastActivityAt, data.today())}</span>
+		<span>Updated {timeAgo(team.lastActivityAt, new Date().toISOString())}</span>
 		<span class="go">Open <ArrowRight size={14} aria-hidden="true" /></span>
 	</footer>
 </a>
@@ -74,8 +73,15 @@
 			@include eyebrow;
 			font-size: 11px;
 		}
+		em {
+			font-style: normal;
+			color: var(--deep-orange);
+			text-transform: none;
+			letter-spacing: 0;
+		}
 	}
-	.blocker {
+	.blocker,
+	.flag {
 		display: flex;
 		gap: 6px;
 		align-items: flex-start;
@@ -88,6 +94,10 @@
 			flex-shrink: 0;
 			margin-top: 2px;
 		}
+	}
+	.flag {
+		background: var(--tint-red);
+		color: var(--deep-red);
 	}
 	footer {
 		display: flex;

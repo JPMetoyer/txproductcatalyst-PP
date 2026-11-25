@@ -34,12 +34,20 @@ class Workspace {
 	status = $state<Record<string, FieldStatus>>({});
 	lastSavedAt = $state<string | null>(null);
 	readonly = $state(false);
+	/** Viewer may start new comment threads (mentors/admins). Teams can only reply. */
+	canStartThreads = $state(false);
+	/** Viewer may reply to / resolve threads. */
+	canComment = $state(false);
 
 	private timers = new Map<string, ReturnType<typeof setTimeout>>();
 	private inflight = 0;
 
 	/** Load server data. Re-initializes only when switching products so unsaved local edits survive navigation. */
-	init(product: Product | null, comments: FieldComment[] = [], opts: { readonly?: boolean; force?: boolean } = {}) {
+	init(
+		product: Product | null,
+		comments: FieldComment[] = [],
+		opts: { readonly?: boolean; force?: boolean; canStartThreads?: boolean; canComment?: boolean } = {}
+	) {
 		if (!opts.force && product && this.product?.id === product.id && this.readonly === !!opts.readonly) return;
 		for (const t of this.timers.values()) clearTimeout(t);
 		this.timers.clear();
@@ -48,6 +56,8 @@ class Workspace {
 		this.status = {};
 		this.lastSavedAt = null;
 		this.readonly = !!opts.readonly;
+		this.canStartThreads = !!opts.canStartThreads;
+		this.canComment = opts.canComment ?? !opts.readonly;
 	}
 
 	get overall(): SaveState {
@@ -241,6 +251,39 @@ class Workspace {
 			this.rows('saved');
 		} catch (e) {
 			this.product.logs.splice(i, 0, removed); // restore
+			toast((e as Error).message, 'error');
+		}
+	}
+
+	/* ---------------- comment threads ---------------- */
+
+	/** Threads for a field: roots (oldest first) with their replies. */
+	threads(fieldKey: string) {
+		const all = this.comments.filter((c) => c.fieldKey === fieldKey);
+		return all
+			.filter((c) => !c.parentId)
+			.map((root) => ({ root, replies: all.filter((r) => r.parentId === root.id) }));
+	}
+
+	async addComment(fieldKey: string, body: string, parentId: string | null = null): Promise<boolean> {
+		if (!this.product) return false;
+		try {
+			const c = await api<FieldComment>('/api/comments', 'POST', { productId: this.product.id, fieldKey, body, parentId });
+			this.comments.push(c);
+			return true;
+		} catch (e) {
+			toast((e as Error).message, 'error');
+			return false;
+		}
+	}
+
+	async setResolved(id: string, resolved: boolean) {
+		try {
+			const c = await api<FieldComment>('/api/comments', 'PATCH', { id, resolved });
+			const i = this.comments.findIndex((x) => x.id === id);
+			if (i >= 0) this.comments[i] = c;
+			toast(resolved ? 'Thread resolved' : 'Thread reopened', 'success');
+		} catch (e) {
 			toast((e as Error).message, 'error');
 		}
 	}

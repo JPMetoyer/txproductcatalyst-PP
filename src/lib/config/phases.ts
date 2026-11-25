@@ -22,3 +22,14 @@ export const PHASES: PhaseMeta[] = [
 export const JOURNEY: JourneyPhase[] = ['discover', 'position', 'monetize', 'scope', 'build', 'validate', 'showcase'];
 
 export const phaseMeta = (key: PhaseKey): PhaseMeta => PHASES.find((p) => p.key === key) ?? PHASES[0];
+
+/**
+ * Phase the semester calendar suggests today: the journey phase of the most recent GM that has
+ * already happened. Informational only — teams can always open and edit every phase.
+ */
+export function recommendedPhase(lessons: { scheduledDate: string | null; relatedPhase: string | null }[], today: string): JourneyPhase {
+	const past = lessons
+		.filter((l) => l.scheduledDate && l.scheduledDate <= today && JOURNEY.includes(l.relatedPhase as JourneyPhase))
+		.sort((a, b) => a.scheduledDate!.localeCompare(b.scheduledDate!));
+	return (past.at(-1)?.relatedPhase as JourneyPhase) ?? 'discover';
+}

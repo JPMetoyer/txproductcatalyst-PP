@@ -1,23 +1,28 @@
 <script lang="ts">
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import MilestoneStatusBadge from '$lib/components/ui/MilestoneStatusBadge.svelte';
-	import * as data from '$lib/data';
 	import { fmtShort } from '$lib/utils/format';
 
-	const teams = data.teamsForMentor(data.DEMO.mentorId);
-	const milestones = data.getMilestones();
+	let { data } = $props();
+	const teams = $derived(data.teams);
+	const milestones = $derived(data.milestones);
+	const statusOf = (teamId: string, msId: string) => data.reviews.find((r) => r.teamId === teamId && r.milestoneId === msId)?.status ?? 'upcoming';
 </script>
 
 <svelte:head><title>Milestone reviews · TPC Studio</title></svelte:head>
 <PageHeader title="Milestone reviews" subtitle="Four lightweight reviews per team. Click a cell to open the review." />
 
+{#if teams.length === 0}
+	<EmptyState title="No teams assigned yet" body="Assigned teams and their milestone reviews appear here." />
+{:else}
 <!-- svelte-ignore a11y_no_noninteractive_tabindex (scrollable region must be keyboard-reachable) -->
 <div class="scroll" role="region" aria-label="Milestone review matrix" tabindex="0">
 	<table>
 		<thead>
 			<tr>
 				<th scope="col">Team</th>
-				{#each milestones as m (m.id)}<th scope="col">M{m.number} · {m.title}<span>{fmtShort(m.targetDate)}</span></th>{/each}
+				{#each milestones as m (m.id)}<th scope="col">M{m.number} · {m.title}<span>{m.targetDate ? fmtShort(m.targetDate) : ''}</span></th>{/each}
 			</tr>
 		</thead>
 		<tbody>
@@ -25,13 +30,14 @@
 				<tr>
 					<th scope="row"><a href="/mentor/teams/{t.id}">{t.name}</a></th>
 					{#each milestones as m (m.id)}
-						<td><a href="/mentor/teams/{t.id}?tab=review" aria-label="{t.name} {m.title}"><MilestoneStatusBadge status={data.getReview(t.id, m.id)?.status ?? 'upcoming'} /></a></td>
+						<td><a href="/mentor/teams/{t.id}?tab=review" aria-label="{t.name} {m.title}"><MilestoneStatusBadge status={statusOf(t.id, m.id)} /></a></td>
 					{/each}
 				</tr>
 			{/each}
 		</tbody>
 	</table>
 </div>
+{/if}
 
 <style lang="scss">
 	.scroll {

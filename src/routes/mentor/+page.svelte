@@ -6,44 +6,42 @@
 	import MilestoneStatusBadge from '$lib/components/ui/MilestoneStatusBadge.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import TeamCard from '$lib/components/product/TeamCard.svelte';
-	import * as data from '$lib/data';
 	import { fmtDate, relativeDays, timeAgo } from '$lib/utils/format';
 
-	const today = data.today();
-	const mentor = data.getMentor(data.DEMO.mentorId)!;
-	const teams = data.teamsForMentor(mentor.id);
-	const ms = data.getNextMilestone();
-	const reviews = teams.flatMap((t) => data.getReviews(t.id).map((r) => ({ ...r, team: t })));
-	const ready = reviews.filter((r) => r.status === 'ready');
-	const blockers = reviews.filter((r) => r.blockers.trim());
-	const history = reviews.filter((r) => r.reviewedAt).sort((a, b) => b.reviewedAt!.localeCompare(a.reviewedAt!));
-	const milestoneTitle = (id: string) => data.getMilestones().find((m) => m.id === id)?.title ?? '';
+	let { data } = $props();
+	const now = new Date().toISOString();
+	const firstName = $derived(data.displayName.split(' ')[0]);
 </script>
 
 <svelte:head><title>Mentor home · TPC Studio</title></svelte:head>
 
-<PageHeader eyebrow="Mentor dashboard" title="Hi, {mentor.displayName.split(' ')[0]}." subtitle="Reviews take about 15 minutes and use what teams have already written. No grading, no extra reports." />
+<PageHeader eyebrow="Mentor dashboard" title="Hi, {firstName}." subtitle="Reviews take about 15 minutes and use what teams have already written. No grading, no extra reports." />
 
 <div class="stats">
-	<div><strong>{teams.length}</strong><span>Assigned teams</span></div>
-	<div class="hl"><strong>{ready.length}</strong><span>Ready for review</span></div>
-	<div><strong>{blockers.length}</strong><span>Reported blockers</span></div>
-	<div><strong>{fmtDate(ms.targetDate, { month: 'short', day: 'numeric' })}</strong><span>M{ms.number} target ({relativeDays(today, ms.targetDate)})</span></div>
+	<div><strong>{data.teams.length}</strong><span>Assigned teams</span></div>
+	<div class="hl"><strong>{data.ready.length}</strong><span>Ready for review</span></div>
+	<div><strong>{data.blockers.length}</strong><span>Reported blockers</span></div>
+	{#if data.nextMilestone}
+		<div>
+			<strong>{fmtDate(data.nextMilestone.targetDate, { month: 'short', day: 'numeric' })}</strong>
+			<span>M{data.nextMilestone.number} target ({relativeDays(data.today, data.nextMilestone.targetDate)})</span>
+		</div>
+	{/if}
 </div>
 
 <div class="grid">
 	<div class="col">
-		<Card title="Ready for review" eyebrow="Upcoming milestone reviews" tone="highlight" id="ready">
-			{#if ready.length}
+		<Card title="Ready for review" eyebrow="Teams waiting on you" tone="highlight" id="ready">
+			{#if data.ready.length}
 				<ul class="list">
-					{#each ready as r (r.id)}
+					{#each data.ready as r (r.id)}
 						<li>
 							<ClipboardCheck size={18} aria-hidden="true" />
 							<div class="grow">
-								<strong>{r.team.name}</strong>
-								<span>{milestoneTitle(r.milestoneId)} · marked ready {timeAgo(r.readyAt!, today)}</span>
+								<strong>{r.teamName}</strong>
+								<span>{r.milestone}{r.readyAt ? ` · marked ready ${timeAgo(r.readyAt, now)}` : ''}</span>
 							</div>
-							<Button size="sm" variant="primary" href="/mentor/teams/{r.team.id}?tab=review" iconRight={ArrowRight}>Review</Button>
+							<Button size="sm" variant="primary" href="/mentor/teams/{r.teamId}?tab=review" iconRight={ArrowRight}>Review</Button>
 						</li>
 					{/each}
 				</ul>
@@ -54,20 +52,24 @@
 
 		<section>
 			<h2 class="h">Your teams</h2>
-			<div class="teams">
-				{#each teams as t (t.id)}<TeamCard team={t} href="/mentor/teams/{t.id}" />{/each}
-			</div>
+			{#if data.teams.length}
+				<div class="teams">
+					{#each data.teams as t (t.id)}<TeamCard team={t} href="/mentor/teams/{t.id}" />{/each}
+				</div>
+			{:else}
+				<EmptyState title="No teams assigned yet" body="The Academics Committee assigns teams to mentors." />
+			{/if}
 		</section>
 	</div>
 
 	<div class="col">
 		<Card title="Reported blockers" id="blockers">
-			{#if blockers.length}
+			{#if data.blockers.length}
 				<ul class="list">
-					{#each blockers as b (b.id)}
+					{#each data.blockers as b (b.id)}
 						<li class="warn">
 							<TriangleAlert size={16} aria-hidden="true" />
-							<div class="grow"><strong>{b.team.name}</strong><span>{b.blockers}</span></div>
+							<div class="grow"><strong>{b.teamName}</strong><span>{b.text}</span></div>
 						</li>
 					{/each}
 				</ul>
@@ -76,21 +78,21 @@
 			{/if}
 		</Card>
 
-		<Card title="Feedback history" id="history">
-			{#if history.length}
+		<Card title="Your feedback history" id="history">
+			{#if data.history.length}
 				<ul class="list">
-					{#each history as h (h.id)}
+					{#each data.history as h (h.id)}
 						<li>
 							<div class="grow">
-								<div class="row"><strong>{h.team.name}</strong><MilestoneStatusBadge status={h.status} /></div>
-								<span>{milestoneTitle(h.milestoneId)} · {timeAgo(h.reviewedAt!, today)}</span>
-								<p>{h.feedback}</p>
+								<div class="row"><strong>{h.teamName}</strong><MilestoneStatusBadge status={h.status} /></div>
+								<span>{h.milestone} · {timeAgo(h.at, now)}</span>
+								{#if h.feedback}<p>{h.feedback}</p>{/if}
 							</div>
 						</li>
 					{/each}
 				</ul>
 			{:else}
-				<p class="muted">Your recorded reviews will appear here.</p>
+				<p class="muted">Reviews you record will appear here.</p>
 			{/if}
 		</Card>
 	</div>

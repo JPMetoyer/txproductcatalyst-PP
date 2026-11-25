@@ -28,3 +28,15 @@ export async function api(cookie: string, method: string, path: string, body: un
 	});
 	return { status: res.status, body: await res.json().catch(() => null) };
 }
+
+/** Submits a SvelteKit form action. Returns { type: 'success' | 'failure' | 'redirect' | 'error', status }. */
+export async function action(cookie: string, path: string, fields: Record<string, string>) {
+	const res = await fetch(`${base}${path}`, {
+		method: 'POST',
+		headers: { cookie, origin: base, 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json', 'x-sveltekit-action': 'true' },
+		body: new URLSearchParams(fields),
+		redirect: 'manual'
+	});
+	const body = await res.json().catch(() => ({}));
+	return { type: body.type as string, status: body.status ?? res.status, data: body.data as string | undefined };
+}

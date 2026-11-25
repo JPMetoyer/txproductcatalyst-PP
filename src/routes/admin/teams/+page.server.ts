@@ -1,27 +1,26 @@
 import { error, fail } from '@sveltejs/kit';
 import { ACCOUNT_DOMAIN, emailToLogin, slugify } from '$lib/auth/accounts';
+import { JOURNEY, recommendedPhase } from '$lib/config/phases';
+import { loadLessons, todayISO } from '$lib/server/repo';
+import { activeSemester } from '$lib/server/teams';
+import { isUuid } from '$lib/server/validate';
+import type { JourneyPhase } from '$lib/types/domain';
 import { supabaseAdmin } from '$lib/server/supabase-admin';
-
-/**
- * Strong, readable shared password: 4 groups of 5 from an unambiguous alphabet (≈ 113 bits).
- * Uses Web Crypto so it runs on Cloudflare without Node APIs.
- */
-const ALPHABET = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const generatePassword = () => {
-	const bytes = crypto.getRandomValues(new Uint8Array(20));
-	const chars = Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('');
-	return chars.match(/.{5}/g)!.join('-');
-};
+import { generatePassword } from '$lib/server/passwords';
 
 export const load = async ({ locals }) => {
 	const db = locals.supabase; // admin's own session; RLS lets admins read everything
-	const [teams, challenges, mentors] = await Promise.all([
+	const sem = await activeSemester(db);
+	if (!sem) return { teams: [], challenges: [], mentors: [], recommended: 'discover' as JourneyPhase, noSemester: true };
+	const [teams, challenges, mentors, lessons] = await Promise.all([
 		db
 			.from('teams')
-			.select('id, name, status, challenge_id, account_profile_id, team_mentors(mentor_profile_id), team_members(id, name, active)')
+			.select('id, name, status, current_phase, challenge_id, account_profile_id, team_mentors(mentor_profile_id), team_members(id, name, active)')
+			.eq('semester_id', sem.id)
 			.order('name'),
-		db.from('challenges').select('id, title').order('position'),
-		db.from('profiles').select('id, display_name').eq('role', 'mentor').eq('active', true).order('display_name')
+		db.from('challenges').select('id, title').eq('semester_id', sem.id).order('position'),
+		db.from('profiles').select('id, display_name').eq('role', 'mentor').eq('active', true).order('display_name'),
+		loadLessons(db, sem.id)
 	]);
 	if (teams.error) error(500, teams.error.message);
 
@@ -39,13 +38,16 @@ export const load = async ({ locals }) => {
 			id: t.id,
 			name: t.name,
 			status: t.status,
+			currentPhase: t.current_phase as JourneyPhase,
 			challengeId: t.challenge_id,
 			mentorId: t.team_mentors[0]?.mentor_profile_id ?? null,
 			login: logins.get(t.id) ?? null,
 			roster: t.team_members.filter((m) => m.active).map((m) => ({ id: m.id, name: m.name }))
 		})),
 		challenges: challenges.data ?? [],
-		mentors: (mentors.data ?? []).map((m) => ({ id: m.id, name: m.display_name }))
+		mentors: (mentors.data ?? []).map((m) => ({ id: m.id, name: m.display_name })),
+		recommended: recommendedPhase(lessons, todayISO()),
+		noSemester: false
 	};
 };
 
@@ -58,6 +60,21 @@ async function teamAccount(locals: App.Locals, teamId: string) {
 	if (!data?.account_profile_id) error(404, 'Team account not found');
 	return data as { id: string; name: string; account_profile_id: string };
 }
+
+/** New password + sign out every device. Returns the credentials to show once. */
+async function rotate(team: { name: string; account_profile_id: string }) {
+	const admin = supabaseAdmin();
+	const password = generatePassword();
+	const { data, error: e } = await admin.auth.admin.updateUserById(team.account_profile_id, { password });
+	if (e) return null;
+	await admin.rpc('admin_revoke_sessions', { p_user: team.account_profile_id });
+	return { team: team.name, login: emailToLogin(data.user.email ?? ''), password };
+}
+
+const memberName = (v: FormDataEntryValue | null) => {
+	const n = String(v ?? '').trim();
+	return n.length >= 1 && n.length <= 80 ? n : null;
+};
 
 export const actions = {
 	create: async ({ request, locals }) => {
@@ -110,12 +127,72 @@ export const actions = {
 	resetCredentials: async ({ request, locals }) => {
 		requireAdmin(locals);
 		const team = await teamAccount(locals, String((await request.formData()).get('teamId')));
-		const admin = supabaseAdmin();
-		const password = generatePassword();
-		const { data, error: e } = await admin.auth.admin.updateUserById(team.account_profile_id, { password });
-		if (e) return fail(500, { action: 'reset', error: 'Could not reset the password.' });
-		await admin.rpc('admin_revoke_sessions', { p_user: team.account_profile_id });
-		return { action: 'reset', credentials: { team: team.name, login: emailToLogin(data.user.email ?? ''), password } };
+		const credentials = await rotate(team);
+		if (!credentials) return fail(500, { action: 'reset', error: 'Could not reset the password.' });
+		return { action: 'reset', credentials };
+	},
+
+	rename: async ({ request, locals }) => {
+		requireAdmin(locals);
+		const f = await request.formData();
+		const name = String(f.get('name') ?? '').trim();
+		if (name.length < 2 || name.length > 80) return fail(400, { action: 'rename', error: 'Team name must be 2–80 characters.' });
+		const { error: e } = await locals.supabase.from('teams').update({ name }).eq('id', String(f.get('teamId')));
+		if (e) return fail(400, { action: 'rename', error: e.code === '23505' ? 'Another team already uses that name.' : 'Could not rename the team.' });
+		return { action: 'rename', message: 'Team renamed. Login and documentation are unchanged.' };
+	},
+
+	phase: async ({ request, locals }) => {
+		requireAdmin(locals);
+		const f = await request.formData();
+		const phase = String(f.get('phase')) as JourneyPhase;
+		if (!JOURNEY.includes(phase)) return fail(400, { action: 'phase', error: 'Invalid phase' });
+		const { error: e } = await locals.supabase.rpc('set_team_phase', { p_team: String(f.get('teamId')), p_phase: phase });
+		if (e) return fail(500, { action: 'phase', error: 'Could not update the phase.' });
+		return { action: 'phase', message: 'Phase updated.' };
+	},
+
+	addMember: async ({ request, locals }) => {
+		requireAdmin(locals);
+		const f = await request.formData();
+		const name = memberName(f.get('name'));
+		const teamId = String(f.get('teamId'));
+		if (!name || !isUuid(teamId)) return fail(400, { action: 'roster', error: 'Enter a name (up to 80 characters).' });
+		const { error: e } = await locals.supabase.from('team_members').insert({ team_id: teamId, name });
+		if (e) return fail(500, { action: 'roster', error: 'Could not add the member.' });
+		return { action: 'roster', message: `Added ${name}.` };
+	},
+
+	/** Remove (deactivate) or move a member. Documentation is never touched. Optionally rotates the old team's credentials. */
+	changeMember: async ({ request, locals }) => {
+		requireAdmin(locals);
+		const f = await request.formData();
+		const memberId = String(f.get('memberId'));
+		const toTeam = String(f.get('toTeamId') ?? '');
+		const rotateCreds = f.get('rotate') === 'on';
+		if (!isUuid(memberId)) return fail(400, { action: 'roster', error: 'Invalid member' });
+		const { data: m } = await locals.supabase.from('team_members').select('id, name, team_id').eq('id', memberId).single();
+		if (!m) return fail(404, { action: 'roster', error: 'Member not found' });
+
+		if (toTeam) {
+			if (!isUuid(toTeam) || toTeam === m.team_id) return fail(400, { action: 'roster', error: 'Pick a different team' });
+			// Keep a record on the old team (inactive) and add them to the new team, so old tasks keep their history.
+			const a = await locals.supabase.from('team_members').update({ active: false }).eq('id', memberId);
+			const b = await locals.supabase.from('team_members').insert({ team_id: toTeam, name: m.name });
+			if (a.error || b.error) return fail(500, { action: 'roster', error: 'Could not move the member.' });
+		} else {
+			const { error: e } = await locals.supabase.from('team_members').update({ active: false }).eq('id', memberId);
+			if (e) return fail(500, { action: 'roster', error: 'Could not remove the member.' });
+		}
+
+		const verb = toTeam ? 'Moved' : 'Removed';
+		if (rotateCreds) {
+			const team = await teamAccount(locals, m.team_id);
+			const credentials = await rotate(team);
+			if (!credentials) return fail(500, { action: 'roster', error: `${verb} ${m.name}, but the password reset failed. Try Reset credentials.` });
+			return { action: 'roster', credentials, message: `${verb} ${m.name}.` };
+		}
+		return { action: 'roster', message: `${verb} ${m.name}. Documentation is unchanged.` };
 	},
 
 	revokeSessions: async ({ request, locals }) => {
