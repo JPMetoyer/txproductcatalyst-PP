@@ -36,6 +36,12 @@ Not reused: Tailwind (the PRD asks for SCSS, and a single styling approach is ea
 
 Free-tier figures to re-verify before launch: Supabase (500 MB DB, 50k MAU, 2 free projects, pausing policy) and Cloudflare Pages/Workers (requests/day, builds/month).
 
+**Hosting decision (2026-11-24): Cloudflare Pages, with DNS staying on Netlify.**
+- **Why not Netlify:** the main TPC site is hosted on Netlify, but Netlify's Free plan moved to a monthly allowance of 300 credits for new accounts. Page views and function calls both use up credits, and the per-request rates aren't clearly published. Going over pauses the site for the rest of the month.
+- **Why Cloudflare:** the free plan gives 100k function requests/day and unlimited free static assets. Going over returns an error for the rest of that day only. It needs no credit card, so there's no way to be charged.
+- **Domain setup:** the only DNS change is one CNAME record, `studio` → the Pages project, added in Netlify's DNS panel. `texasproductcatalyst.org` stays on Netlify.
+- **Constraint:** the free plan allows 10 ms of CPU time per request. SvelteKit pages that mostly wait on Supabase fit comfortably, but avoid heavy server-side computation.
+
 ---
 
 ## 3. Project structure
@@ -109,7 +115,7 @@ Account creation, password rotation, and session revocation run **only** in Svel
 | 2. Core student experience | Autosave with versioning, logs/tables persisted, decisions, tasks, export (Markdown + print stylesheet) | |
 | 3. Mentorship & admin | Milestone review flow, field comments, team/roster/mentor management, challenge editor, semester settings | |
 | 4. Education & tools | PM Academy CMS, Business Model Studio, Feasibility Explorer, Career Center, Demo Day | |
-| 5. Test & deploy | RLS tests per role, concurrent-edit tests, Playwright smoke tests, mobile QA, Cloudflare deploy to `studio.<domain>`, admin guide | |
+| 5. Test & deploy | RLS tests per role, concurrent-edit tests, Playwright smoke tests, mobile QA, Cloudflare Pages deploy to `studio.texasproductcatalyst.org` (CNAME in Netlify DNS), admin guide | |
 
 ---
 
@@ -117,7 +123,7 @@ Account creation, password rotation, and session revocation run **only** in Svel
 
 1. **Team login identifier.** Supabase Auth needs an email. Should we use synthetic addresses (`team-slug@studio.<domain>`, shown to students as just a username) or a real shared inbox per team?
 2. **Password resets.** Is admin-only rotation acceptable for launch, or do teams need self-serve "forgot password"? Self-serve needs custom SMTP (see R2).
-3. **Which domain?** Needed for the subdomain, the Cloudflare DNS setup, and the auth redirect URLs.
+3. ~~Which domain?~~ **Answered:** texasproductcatalyst.org. DNS is on Netlify; Studio goes on Cloudflare Pages via a CNAME.
 4. **Mentors per team.** Is it always one, or sometimes co-mentors? The plan assumes a join table either way.
 5. **Milestone 4 timing.** After GM7 or after GM8? Should it be configurable per semester? (The plan makes all milestone dates configurable.)
 6. **Archived semesters.** Can a team account from a past semester still log in read-only, or are past semesters visible only to admins and mentors?
