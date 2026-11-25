@@ -13,7 +13,7 @@ export const load = async ({ locals }) => {
 		nextMilestone: milestones.find((m) => m.targetDate >= today) ?? null,
 		ready: reviews
 			.filter((r) => r.status === 'ready')
-			.map((r) => ({ id: r.id, teamId: r.teamId, teamName: name(r.teamId), milestone: title(r.milestoneId), readyAt: r.readyAt })),
+			.map((r) => ({ id: r.id, teamId: r.teamId, milestoneId: r.milestoneId, teamName: name(r.teamId), milestone: title(r.milestoneId), readyAt: r.readyAt })),
 		blockers: reviews.filter((r) => r.blockers.trim()).map((r) => ({ id: r.id, teamName: name(r.teamId), text: r.blockers })),
 		history: reviews
 			.filter((r) => r.reviewedAt && r.reviewerId === me)

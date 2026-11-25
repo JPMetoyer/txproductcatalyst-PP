@@ -39,8 +39,7 @@
 		<span class="eyebrow">{semester.name} · {semester.theme}</span>
 		<h1>{greeting}, {team.name}.</h1>
 		<p>
-			You're in the <strong>{phase.label}</strong> phase{#if challenge}&nbsp;of <a href="/challenges/{challenge.id}">{challenge.title}</a>{/if}.{#if milestone} Next up:
-			get ready for your {milestone.title}.{/if}
+			You're in the <strong>{phase.label}</strong> phase{#if challenge}{' '}of <a href="/challenges/{challenge.id}">{challenge.title}</a>{/if}.{#if milestone && review?.status !== 'reviewed'}{' '}Next up: get ready for your {milestone.title}.{/if}
 		</p>
 		<div class="hero-actions">
 			<Button variant="primary" href="/product/{team.currentPhase}" iconRight={ArrowRight}>Continue in {phase.label}</Button>

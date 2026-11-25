@@ -14,7 +14,9 @@ export const load = async ({ locals, parent }) => {
 		loadAnnouncements(db, ctx.semester.id),
 		db.from('product_fields').select('value').eq('product_id', ctx.productId).eq('field_key', 'ov.prototype').maybeSingle()
 	]);
-	const milestone = milestones.find((m) => m.targetDate >= today) ?? milestones.at(-1) ?? null;
+	// Next milestone = the first one this team hasn't been reviewed on yet (dates are a guide, not a gate).
+	const done = new Set(reviews.filter((r) => r.status === 'reviewed').map((r) => r.milestoneId));
+	const milestone = milestones.find((m) => !done.has(m.id)) ?? milestones.at(-1) ?? null;
 	return {
 		tasks,
 		lesson: lessons.find((l) => l.scheduledDate != null && l.scheduledDate >= today) ?? null,

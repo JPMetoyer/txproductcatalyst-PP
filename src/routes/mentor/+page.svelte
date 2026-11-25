@@ -41,7 +41,7 @@
 								<strong>{r.teamName}</strong>
 								<span>{r.milestone}{r.readyAt ? ` · marked ready ${timeAgo(r.readyAt, now)}` : ''}</span>
 							</div>
-							<Button size="sm" variant="primary" href="/mentor/teams/{r.teamId}?tab=review" iconRight={ArrowRight}>Review</Button>
+							<Button size="sm" variant="primary" href="/mentor/teams/{r.teamId}?tab=review&milestone={r.milestoneId}" iconRight={ArrowRight}>Review</Button>
 						</li>
 					{/each}
 				</ul>

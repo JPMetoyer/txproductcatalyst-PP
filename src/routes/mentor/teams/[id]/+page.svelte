@@ -38,7 +38,10 @@
 	const defaultMs = $derived(data.milestones.find((m) => m.targetDate >= data.today) ?? data.milestones.at(-1));
 	let msId = $state('');
 	$effect.pre(() => {
-		if (!msId && defaultMs) msId = defaultMs.id;
+		// ?milestone=<id> (from the dashboard's Review button) wins; otherwise a ready one, then the next by date.
+		const wanted = page.url.searchParams.get('milestone');
+		const ready = data.reviews.find((r) => r.status === 'ready')?.milestoneId;
+		if (!msId) msId = (data.milestones.find((m) => m.id === wanted) ?? data.milestones.find((m) => m.id === ready) ?? defaultMs)?.id ?? '';
 	});
 	const ms = $derived(data.milestones.find((m) => m.id === msId));
 	const existing = $derived(ms ? reviewOf(ms.id) : undefined);
