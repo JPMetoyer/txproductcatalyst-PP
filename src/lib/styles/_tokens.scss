@@ -1,0 +1,45 @@
+// Injected into every component's <style lang="scss"> via vite.config.ts.
+// Keep this file to variables + mixins only (it must not emit CSS).
+// Colors live as CSS custom properties in global.scss so they can be themed at runtime.
+
+$bp-sm: 640px;
+$bp-md: 900px;
+$bp-lg: 1200px;
+
+$sidebar-w: 248px;
+
+@mixin up($bp) {
+	@media (min-width: $bp) {
+		@content;
+	}
+}
+@mixin down($bp) {
+	@media (max-width: ($bp - 1px)) {
+		@content;
+	}
+}
+
+@mixin focus-ring {
+	outline: 2px solid var(--c-focus);
+	outline-offset: 2px;
+}
+
+@mixin card {
+	background: var(--c-surface);
+	border: 1px solid var(--c-border);
+	border-radius: var(--r-lg);
+}
+
+@mixin eyebrow {
+	font-size: var(--fs-xs);
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--c-text-muted);
+}
+
+@mixin truncate {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

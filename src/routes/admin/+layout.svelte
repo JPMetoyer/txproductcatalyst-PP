@@ -1,0 +1,22 @@
+<script lang="ts">
+	import { LayoutDashboard, Users, UserCog, Store, BookOpen, Flag, Presentation, CalendarCog } from '@lucide/svelte';
+	import AppShell, { type NavItem } from '$lib/components/layout/AppShell.svelte';
+	import { getSemester } from '$lib/data';
+
+	let { children } = $props();
+	const semester = getSemester();
+	const nav: NavItem[] = [
+		{ href: '/admin', label: 'Overview', icon: LayoutDashboard, exact: true },
+		{ href: '/admin/teams', label: 'Teams', icon: Users },
+		{ href: '/admin/mentors', label: 'Mentors', icon: UserCog },
+		{ href: '/admin/challenges', label: 'Challenge Marketplace', icon: Store },
+		{ href: '/admin/curriculum', label: 'Curriculum', icon: BookOpen },
+		{ href: '/admin/milestones', label: 'Milestones', icon: Flag },
+		{ href: '/admin/demo-day', label: 'Demo Day', icon: Presentation },
+		{ href: '/admin/semester', label: 'Semester Settings', icon: CalendarCog }
+	];
+</script>
+
+<AppShell {nav} workspaceName="Academics Committee" workspaceSub="{semester.name} · Active" roleLabel="Admin">
+	{@render children()}
+</AppShell>

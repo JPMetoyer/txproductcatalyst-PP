@@ -1,0 +1,163 @@
+// Global design tokens + resets. Brand values mirror the TPC website (src/app.css there).
+
+:root {
+	color-scheme: light;
+
+	/* Brand */
+	--tpc-blue: #84b3ff;
+	--tpc-pink: #ff67ca;
+	--tpc-orange: #ffc366;
+	--tpc-lavender: #bba6ef;
+	--tpc-ink: #202337;
+	--tpc-gradient: linear-gradient(120deg, var(--tpc-blue) 0%, var(--tpc-pink) 50%, var(--tpc-orange) 100%);
+
+	/* Tints for chips & washes (pastels at low strength keep text readable) */
+	--tint-blue: #eaf2ff;
+	--tint-pink: #ffeaf7;
+	--tint-orange: #fff4e2;
+	--tint-lavender: #f2edfd;
+	--tint-green: #e7f7ee;
+	--tint-red: #fdecec;
+
+	/* Accessible "deep" text colors for each hue (≥4.5:1 on their tints) */
+	--deep-blue: #2a5bc4;
+	--deep-pink: #b0237e;
+	--deep-orange: #8a5300;
+	--deep-lavender: #5a3fae;
+	--deep-green: #1d7a46;
+	--deep-red: #b42323;
+
+	/* Neutrals */
+	--c-bg: #f7f7fa;
+	--c-surface: #ffffff;
+	--c-surface-2: #f2f2f6;
+	--c-border: #e5e5ec;
+	--c-border-strong: #d2d2dc;
+	--c-text: var(--tpc-ink);
+	--c-text-muted: #5f6276;
+	--c-text-faint: #8b8ea0;
+	--c-focus: #4c7dff;
+	--c-primary: var(--tpc-ink);
+	--c-primary-text: #ffffff;
+
+	/* Type */
+	--font-display: 'Satoshi', 'Inter', system-ui, sans-serif;
+	--font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--fs-xs: 0.75rem;
+	--fs-sm: 0.8125rem;
+	--fs-base: 0.9375rem;
+	--fs-md: 1.0625rem;
+	--fs-lg: 1.25rem;
+	--fs-xl: 1.625rem;
+	--fs-2xl: 2.125rem;
+
+	/* Space / radius / shadow */
+	--sp-1: 4px;
+	--sp-2: 8px;
+	--sp-3: 12px;
+	--sp-4: 16px;
+	--sp-5: 24px;
+	--sp-6: 32px;
+	--sp-7: 48px;
+	--r-sm: 6px;
+	--r-md: 10px;
+	--r-lg: 14px;
+	--r-xl: 20px;
+	--shadow-sm: 0 1px 2px rgba(32, 35, 55, 0.06);
+	--shadow-md: 0 4px 16px rgba(32, 35, 55, 0.08);
+	--shadow-lg: 0 12px 40px rgba(32, 35, 55, 0.16);
+	--ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+	--dur: 160ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	:root {
+		--dur: 0ms;
+	}
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		transition-duration: 0.01ms !important;
+	}
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background: var(--c-bg);
+	color: var(--c-text);
+	font-family: var(--font-body);
+	font-size: var(--fs-base);
+	line-height: 1.55;
+	-webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+	font-family: var(--font-display);
+	font-weight: 700;
+	line-height: 1.2;
+	margin: 0;
+	letter-spacing: -0.01em;
+}
+
+p {
+	margin: 0;
+}
+
+a {
+	color: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+	font: inherit;
+	color: inherit;
+}
+
+:focus-visible {
+	outline: 2px solid var(--c-focus);
+	outline-offset: 2px;
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.skeleton {
+	background: linear-gradient(90deg, var(--c-surface-2) 25%, #e9e9ef 37%, var(--c-surface-2) 63%);
+	background-size: 400% 100%;
+	animation: shimmer 1.4s ease infinite;
+	border-radius: var(--r-sm);
+}
+@keyframes shimmer {
+	0% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0 50%;
+	}
+}
