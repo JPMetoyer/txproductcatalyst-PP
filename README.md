@@ -2,7 +2,7 @@
 
 Product management workspace for Texas Product Catalyst's semester Product Project.
 
-**Status:** Phase 2 done. Login, access rules, and every team page run on real data with autosave. Mentor and admin screens (other than Admin → Teams) still show demo data until Phase 3. See [docs/PLAN.md](docs/PLAN.md) for architecture, risks, open questions, and the progress tracker.
+**Status:** Phase 3 done. Every screen runs on real data: team workspace with autosave, mentor reviews and comments, and admin management of semesters, challenges, curriculum, milestones, teams and mentors. Phase 4 (Business Model Studio, Feasibility Explorer, Career Center, Demo Day) is next. See [docs/PLAN.md](docs/PLAN.md) for architecture, risks, open questions, and the progress tracker.
 
 ## Run locally
 
@@ -34,6 +34,15 @@ npm run dev            # http://localhost:5173
 
 There is no public sign-up. Admins create teams under **Admin → Teams**, which generates a login like `team-nestled` and a password that's shown once. Team logins are Supabase Auth users with addresses on `studio.texasproductcatalyst.org`. No email is ever sent to them. **Reset credentials** issues a new password and signs out every device.
 
+## For admins (no code needed)
+
+Everything students see is edited under **Admin**:
+
+- **Semester settings:** create the next semester (optionally copying content), set dates and theme, toggle public marketplace browsing, activate, and archive. Archiving keeps all documentation read-only.
+- **Challenge Marketplace / Curriculum / Milestones:** create, edit, reorder, publish/unpublish.
+- **Teams:** create (login + one-time password), rename, set phase, edit rosters, reset credentials, revoke sessions.
+- **Mentors:** create, assign teams, reset password, deactivate.
+
 ## Where things live
 
 | Path | What |
@@ -43,7 +52,8 @@ There is no public sign-up. Admins create teams under **Admin → Teams**, which
 | `src/lib/server/repo.ts` | Database reads for pages (runs as the signed-in user, so RLS applies) |
 | `src/lib/server/validate.ts` | Input validation for every write endpoint |
 | `src/routes/api/` | Save endpoints: fields, logs, decisions, tasks, milestone readiness |
-| `src/lib/data/` | Demo data still used by mentor/admin screens (removed in Phase 3) |
+| `src/lib/server/teams.ts`, `admin.ts` | Dashboard summaries and shared admin-editor helpers |
+| `scripts/seed-data.ts` | Demo data loaded by `npm run db:seed` |
 | `src/lib/stores/workspace.svelte.ts` | My Product autosave state |
 | `src/lib/styles/` | Design tokens (`global.scss`) and SCSS mixins (`_tokens.scss`) |
 | `src/lib/components/ui/` | Reusable UI: Button, Card, Badge, Modal, Toast, EmptyState… |

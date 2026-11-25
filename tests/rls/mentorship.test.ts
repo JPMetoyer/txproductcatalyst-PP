@@ -15,7 +15,7 @@ describe.skipIf(!creds.length)('mentorship features (needs dev server)', () => {
 	let academics = '';
 	let nestled: any;
 	let onboard: any;
-	const cleanup: (() => Promise<unknown>)[] = [];
+	const cleanup: (() => PromiseLike<unknown>)[] = [];
 
 	beforeAll(async () => {
 		up = await serverUp();

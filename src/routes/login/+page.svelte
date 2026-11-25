@@ -3,10 +3,8 @@
 	import { Lock, Info } from '@lucide/svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Capybara from '$lib/components/ui/Capybara.svelte';
-	import { getSemester } from '$lib/data';
 
 	let { data, form } = $props();
-	const semester = getSemester();
 	let loading = $state(false);
 </script>
 
@@ -17,7 +15,7 @@
 		<div class="art-inner">
 			<span class="logo"><img src="/tpc.png" alt="" width="32" height="32" /> TPC Studio</span>
 			<div class="pitch">
-				<span class="pill">{semester.name} · {semester.theme}</span>
+				{#if data.semester}<span class="pill">{data.semester.name} · {data.semester.theme}</span>{/if}
 				<h1>Where your product takes shape.</h1>
 				<p>Discover a real problem, build something people want, and tell its story at Demo Day — all in one workspace.</p>
 			</div>

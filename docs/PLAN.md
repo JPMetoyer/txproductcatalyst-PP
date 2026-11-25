@@ -113,13 +113,15 @@ Account creation, password rotation, and session revocation run **only** in Svel
 | **0. Frontend prototype** | SvelteKit + SCSS design system, app shells for 3 roles, mock data, priority screens: Login, Team Home, Marketplace, Challenge detail, My Product, Mentor dashboard, Admin overview | **Done, pending review** |
 | 1. Foundation | Supabase project, migrations + RLS + seed, `@supabase/ssr` auth, role-based route guards, admin account provisioning actions | **Done.** 20 integration tests pass against the live project |
 | 2. Core student experience | Autosave with versioning, logs/tables persisted, decisions, tasks, export (Markdown + print stylesheet) | **Done.** Team pages read and save real data; 27 integration tests |
-| 3. Mentorship & admin | Milestone review flow, field comments, team/roster/mentor management, challenge editor, semester settings | |
+| 3. Mentorship & admin | Milestone review flow, field comments, team/roster/mentor management, challenge editor, semester settings | **Done.** Comment threads, flags, phase tracking, roster tools, mentors, semester/challenge/curriculum/milestone editors; 46 tests |
 | 4. Education & tools | PM Academy CMS, Business Model Studio, Feasibility Explorer, Career Center, Demo Day | |
 | 5. Test & deploy | RLS tests per role, concurrent-edit tests, Playwright smoke tests, mobile QA, Cloudflare Pages deploy to `studio.texasproductcatalyst.org` (CNAME in Netlify DNS), admin guide | |
 
 ---
 
 ## 6. Questions to answer before Phase 1
+
+**Answered so far:** team logins use synthetic `team-<name>` addresses, password resets are admin-only, teams can have several mentors, mentors comment on any field anytime, teams reply and resolve, flags require a note, admins choose whether to rotate credentials on roster changes, the calendar recommends a phase but mentors/admins set it, and teams can rename themselves.
 
 1. **Team login identifier.** Supabase Auth needs an email. Should we use synthetic addresses (`team-slug@studio.<domain>`, shown to students as just a username) or a real shared inbox per team?
 2. **Password resets.** Is admin-only rotation acceptable for launch, or do teams need self-serve "forgot password"? Self-serve needs custom SMTP (see R2).
@@ -147,13 +149,13 @@ Account creation, password rotation, and session revocation run **only** in Svel
 | Competitor & feature tables | ☑ | ☑ |
 | Decision log | ☑ | ☑ |
 | Team tasks | ☑ | ☑ |
-| Mentor dashboard | ☑ | ☐ |
-| Admin overview | ☑ | ☐ |
-| Milestone reviews | Status display | ☐ |
+| Mentor dashboard | ☑ | ☑ |
+| Admin overview | ☑ | ☑ (flags with reason/date/mentor, clearable) |
+| Milestone reviews | ☑ | ☑ (team readiness, mentor outcomes, separate from comments) |
 | Business Model Studio | ☐ | ☐ |
 | Feasibility Explorer | ☐ | ☐ |
-| PM Academy / Career / Demo Day | Placeholders | ☐ |
-| Admin CRUD, semester config | ☐ | ☐ |
+| PM Academy / Career / Demo Day | Academy list ☑; Career and Demo Day are placeholders | Academy ☑; rest in Phase 4 |
+| Admin CRUD, semester config | ☑ | ☑ (semesters, challenges, curriculum, milestones, teams, mentors) |
 | Export | ☑ (Markdown download) | ☑ (from saved data) |
 | PM Academy lesson list | ☑ (read-only) | ☑ (team view) |
-| Admin teams page | ☑ (UI only) | ☐ |
+| Admin teams page | ☑ | ☑ (create, rename, phase, roster, credentials) |

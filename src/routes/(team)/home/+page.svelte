@@ -92,7 +92,7 @@
 	<div class="col">
 		{#if lesson}
 			<Card title="GM{lesson.gmNumber} — {lesson.title}" eyebrow="Upcoming GM" id="gm">
-				<p class="date"><CalendarDays size={15} aria-hidden="true" /> {fmtDate(lesson.scheduledDate)} · {relativeDays(today, lesson.scheduledDate)}</p>
+				<p class="date"><CalendarDays size={15} aria-hidden="true" /> {fmtDate(lesson.scheduledDate!)} · {relativeDays(today, lesson.scheduledDate!)}</p>
 				<p class="desc">{lesson.description}</p>
 				<a class="link" href="/academy">Open in PM Academy <ArrowRight size={14} aria-hidden="true" /></a>
 			</Card>

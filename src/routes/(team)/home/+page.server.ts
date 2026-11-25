@@ -17,7 +17,7 @@ export const load = async ({ locals, parent }) => {
 	const milestone = milestones.find((m) => m.targetDate >= today) ?? milestones.at(-1) ?? null;
 	return {
 		tasks,
-		lesson: lessons.find((l) => l.scheduledDate >= today) ?? null,
+		lesson: lessons.find((l) => l.scheduledDate != null && l.scheduledDate >= today) ?? null,
 		milestone,
 		review: milestone ? (reviews.find((r) => r.milestoneId === milestone.id) ?? null) : null,
 		feedback,

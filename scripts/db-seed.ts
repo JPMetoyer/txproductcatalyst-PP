@@ -8,7 +8,7 @@
 import { randomBytes } from 'node:crypto';
 import { writeFile } from 'node:fs/promises';
 import { createClient } from '@supabase/supabase-js';
-import * as mock from '../src/lib/data/mock.ts';
+import * as mock from './seed-data.ts';
 import { ACCOUNT_DOMAIN, slugify } from '../src/lib/auth/accounts.ts';
 
 const url = process.env.PUBLIC_SUPABASE_URL;

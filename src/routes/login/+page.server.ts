@@ -6,9 +6,11 @@ import type { Role } from '$lib/types/domain';
 const safeNext = (v: FormDataEntryValue | string | null) =>
 	typeof v === 'string' && v.startsWith('/') && !v.startsWith('//') ? v : null;
 
-export const load = ({ locals, url }) => {
+export const load = async ({ locals, url }) => {
 	if (locals.profile) redirect(303, safeNext(url.searchParams.get('next')) ?? homeFor(locals.profile.role));
-	return { next: safeNext(url.searchParams.get('next')) };
+	// Signed-out visitors can only read the semester when public browsing is on; otherwise the pill is hidden.
+	const { data: semester } = await locals.supabase.from('semesters').select('name, theme').eq('status', 'active').maybeSingle();
+	return { next: safeNext(url.searchParams.get('next')), semester };
 };
 
 export const actions = {

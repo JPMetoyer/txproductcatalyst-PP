@@ -56,7 +56,13 @@ export const toLesson = (l: any): Lesson => ({
 	description: l.description,
 	topics: l.content?.topics ?? [],
 	relatedPhase: l.related_phase,
-	published: l.published
+	published: l.published,
+	objectives: l.content?.objectives ?? [],
+	slideUrl: l.content?.slideUrl ?? '',
+	keyConcepts: l.content?.keyConcepts ?? [],
+	examples: l.content?.examples ?? '',
+	activity: l.content?.activity ?? '',
+	resources: l.content?.resources ?? []
 });
 
 export const toMilestone = (m: any): Milestone => ({

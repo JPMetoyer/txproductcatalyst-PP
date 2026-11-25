@@ -1,5 +1,5 @@
-// Realistic mock data for the frontend prototype.
-// Mirrors the shape of the future Supabase tables; replaced in Phase 1 by queries in $lib/data/*.server.ts.
+// Demo data used by scripts/db-seed.ts to fill a development database.
+// Shapes follow $lib/types/domain.
 
 import type {
 	Announcement,

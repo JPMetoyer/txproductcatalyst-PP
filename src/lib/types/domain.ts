@@ -26,7 +26,7 @@ export interface Semester {
 	theme: string; // "Life in Motion"
 	startDate: ISODate;
 	endDate: ISODate;
-	status: 'active' | 'archived';
+	status: 'upcoming' | 'active' | 'archived';
 	publicMarketplace: boolean;
 }
 
@@ -99,11 +99,18 @@ export interface Lesson {
 	id: ID;
 	gmNumber: number;
 	title: string; // "DISCOVER IT"
-	scheduledDate: ISODate;
+	/** Null until admins set the GM schedule. */
+	scheduledDate: ISODate | null;
 	description: string;
 	topics: string[];
 	relatedPhase: PhaseKey | null;
 	published: boolean;
+	objectives?: string[];
+	slideUrl?: string;
+	keyConcepts?: string[];
+	examples?: string;
+	activity?: string;
+	resources?: { title: string; url: string }[];
 }
 
 export type MilestoneStatus = 'upcoming' | 'ready' | 'reviewed' | 'follow-up';

@@ -8,19 +8,19 @@
 
 	let { lessons: all, today: t, linkToProduct = true }: { lessons: Lesson[]; today: string; linkToProduct?: boolean } = $props();
 	const lessons = $derived(all.filter((l) => l.published).sort((a, b) => a.gmNumber - b.gmNumber));
-	const upcoming = $derived(lessons.find((l) => l.scheduledDate >= t));
+	const upcoming = $derived(lessons.find((l) => l.scheduledDate != null && l.scheduledDate >= t));
 </script>
 
 <ol class="lessons">
 	{#each lessons as l (l.id)}
-		<li class:next={l === upcoming} class:past={l.scheduledDate < t}>
+		<li class:next={l === upcoming} class:past={l.scheduledDate != null && l.scheduledDate < t}>
 			<span class="gm">GM{l.gmNumber}</span>
 			<div class="body">
 				<div class="row">
 					<h2>{l.title}</h2>
 					{#if l === upcoming}<Badge tone="pink">Up next</Badge>{/if}
 				</div>
-				<p class="date">{fmtDate(l.scheduledDate)}</p>
+				<p class="date">{l.scheduledDate ? fmtDate(l.scheduledDate) : 'Date to be announced'}</p>
 				<p>{l.description}</p>
 				<ul class="topics">{#each l.topics as tp}<li>{tp}</li>{/each}</ul>
 				{#if linkToProduct && l.relatedPhase}
