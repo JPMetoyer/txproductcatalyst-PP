@@ -14,7 +14,8 @@
 
 	let { data, form } = $props();
 	const now = new Date().toISOString();
-	const upcoming = $derived(data.milestones.filter((m) => !m.targetDate || m.targetDate >= data.today));
+	const upcoming = $derived(data.milestones);
+	const ready = (k: string) => data.teams.filter((t) => t.demoDayReadiness === k).length;
 	const firstMs = $derived(data.milestones[0]);
 	const count = (msId: string, s: MilestoneStatus) =>
 		s === 'upcoming'
@@ -83,7 +84,7 @@
 				{/if}
 			</Card>
 
-			<Card title="Upcoming milestones" id="milestones">
+			<Card title="Milestone reviews" id="milestones">
 				{#if upcoming.length}
 					<div class="ms-list">
 						{#each upcoming as m (m.id)}
@@ -112,7 +113,7 @@
 						{/each}
 					</div>
 				{:else}
-					<p class="muted">No upcoming milestones. <a href="/admin/milestones">Set milestone dates</a>.</p>
+					<p class="muted">No milestones yet. <a href="/admin/milestones">Set milestone dates</a>.</p>
 				{/if}
 			</Card>
 
@@ -140,6 +141,29 @@
 		</div>
 
 		<div class="col">
+			<Card title="Demo Day" id="demo-day">
+				{#if data.demoDay.date}
+					<p><strong>{fmtDate(data.demoDay.date)}</strong>{data.demoDay.time ? ` · ${data.demoDay.time}` : ''} · {relativeDays(data.today, data.demoDay.date)}</p>
+				{:else}
+					<p class="muted">Date not set. <a href="/admin/demo-day">Set it</a>.</p>
+				{/if}
+				<ul class="list plain">
+					{#each READINESS as r (r.key)}
+						<li><div><strong>{ready(r.key)}</strong><span>{r.label}</span></div></li>
+					{/each}
+				</ul>
+			</Card>
+			<Card title="Recent documentation updates" id="docs">
+				{#if data.docUpdates.length}
+					<ul class="list plain">
+						{#each data.docUpdates as d (d.id)}
+							<li><div><strong>{d.teamName}</strong><span>updated {d.field} · {timeAgo(d.at, now)}</span></div></li>
+						{/each}
+					</ul>
+				{:else}
+					<p class="muted">No documentation yet.</p>
+				{/if}
+			</Card>
 			<Card title="Recent milestone activity" id="activity">
 				{#if data.activity.length}
 					<ul class="list plain">

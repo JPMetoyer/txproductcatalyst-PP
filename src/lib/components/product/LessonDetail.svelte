@@ -60,7 +60,10 @@
 		{#if l.resources?.length}
 			<div class="box">
 				<p class="lbl">Additional resources</p>
-				{#each l.resources as r}<a class="tool" href={r.url} target="_blank" rel="noopener noreferrer">{r.title} <ExternalLink size={12} aria-hidden="true" /></a>{/each}
+				{#each l.resources as r}
+					{#if r.url}<a class="tool" href={r.url} target="_blank" rel="noopener noreferrer">{r.title} <ExternalLink size={12} aria-hidden="true" /></a>
+					{:else}<span class="tool">{r.title}</span>{/if}
+				{/each}
 			</div>
 		{/if}
 	</aside>
